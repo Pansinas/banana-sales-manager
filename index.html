@@ -93,8 +93,9 @@
                         removeButton.style.display = 'inline-block'; // Show if more than one row
                     }
                 }
-            });
-        }
+            }
+        });
+    }
 
     // --- New Sale Form Specific Functions (must be global for inline calls) ---
     let newProductRowCounter = 0; // Reset counter for new form
@@ -224,9 +225,14 @@
 
     // Render Sales List (FETCHES FROM FIREBASE)
     async function renderSalesList() {
+        // Check if salesCollection is initialized. If not, Firebase initialization might have failed.
         if (!salesCollection) {
-            console.error("Firestore salesCollection not initialized.");
-            showFlashMessage("Database not ready. Please refresh or check Firebase setup.", "error");
+            console.error("Firestore salesCollection not initialized. Cannot render sales list.");
+            // Display an error message to the user if the database is not ready.
+            document.getElementById('sales-list-container').innerHTML = '<p class="text-red-600 text-center py-4">Database not ready. Please refresh the page or check your Firebase setup in the browser console.</p>';
+            document.getElementById('total-sales-amount').textContent = '₹0.00';
+            document.getElementById('total-amount-received').textContent = '₹0.00';
+            document.getElementById('total-outstanding').textContent = '₹0.00';
             return;
         }
 
