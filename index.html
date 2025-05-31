@@ -348,9 +348,9 @@
                     <div class="mb-4 text-sm">
                         <p><strong>Bill Number:</strong> <span id="bill-bill-number"></span></p>
                         <p><strong>Date:</strong> <span id="bill-date"></span></p>
-                        <p><strong>Seller:</strong> Your Father's Business Name (e.g., "Green Harvest Bananas")</p>
-                        <p><strong>Address:</strong> Your Business Address</p>
-                        <p><strong>Contact:</strong> Your Contact Number</p>
+                        <p><strong>Seller:</strong> ALPHONSE N</p>
+                        <p><strong>Address:</strong> Nagercoil Pampanvilai Anandanadarkudi Road</p>
+                        <p><strong>Contact:</strong> +91 9443391054</p>
                     </div>
                     <div class="mb-6">
                         <p class="text-lg font-semibold mb-2">Bill To:</p>
@@ -446,6 +446,7 @@
         // These need to be accessible by functions that are called by onclick/oninput handlers.
         let db;
         let salesCollection;
+        let billCounterDocRef; // Reference to the bill counter document
 
         // --- GLOBAL UTILITIES AND CONSTANTS (Accessible throughout the script) ---
         const bananaTypes = ["Red Banana", "Robusta", "Matti", "Athan"];
@@ -691,6 +692,25 @@
                 totalAmountDue = netBilledWeight * overallPricePerKg;
             }
             document.getElementById('edit-total-amount-due').textContent = '₹' + totalAmountDue.toFixed(2);
+        }
+
+        // Function to get and increment the bill number from Firestore
+        async function getAndIncrementBillNumber() {
+            try {
+                const docSnap = await billCounterDocRef.get();
+                let currentNumber = 1; // Default starting number
+
+                if (docSnap.exists) {
+                    currentNumber = (docSnap.data().currentNumber || 0) + 1;
+                }
+
+                await billCounterDocRef.set({ currentNumber: currentNumber });
+                return currentNumber;
+            } catch (error) {
+                console.error("Error getting or incrementing bill number:", error);
+                showFlashMessage('Error generating bill number. Please try again.', 'error');
+                return null; // Indicate failure
+            }
         }
 
 
@@ -971,6 +991,7 @@ const firebaseConfig = {
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore(); // Assign to global db variable
             salesCollection = db.collection('sales'); // Assign to global salesCollection variable
+            billCounterDocRef = db.collection('metadata').doc('billCounter'); // Initialize bill counter reference
             console.log("Firebase initialized successfully.");
 
             // Initial render of sales data
@@ -1055,8 +1076,14 @@ const firebaseConfig = {
 
                 const totalAmount = netBilledWeightKg * newOverallPricePerKg; // Calculate total amount based on NET billed weight
 
+                const nextBillNumber = await getAndIncrementBillNumber(); // Get the next sequential bill number
+                if (nextBillNumber === null) {
+                    // Error already handled by getAndIncrementBillNumber
+                    return;
+                }
+
                 const newSale = {
-                    billNumber: `BILL-${Date.now()}`,
+                    billNumber: `BILL-${nextBillNumber}`, // Use the sequential bill number
                     date: newSaleDate,
                     merchantName: newMerchantName,
                     products: products,
