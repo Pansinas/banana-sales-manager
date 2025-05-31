@@ -92,8 +92,8 @@
                     } else {
                         removeButton.style.display = 'inline-block'; // Show if more than one row
                     }
-                }
-            }
+                } // Corrected: Closing brace for if (removeButton)
+            } // Corrected: Closing brace for if (removeButtonDiv)
         });
     }
 
@@ -614,7 +614,7 @@
                     const quantity = parseInt(quantityInput.value);
 
                     if (!bananaType || isNaN(weight) || weight <= 0 || isNaN(quantity) || quantity <= 0) {
-                        showFlashMessage('Please fill all product fields with valid positive numbers for each entry during editing.', 'error');
+                        showFlashMessage('Please fill all product fields with valid positive numbers for each entry.', 'error');
                         isValid = false;
                     }
                     updatedProducts.push({ bananaType, weightKg: weight, quantity: quantity });
@@ -625,7 +625,7 @@
                 if (!isValid) return;
 
                 if (isNaN(updatedOverallPricePerKg) || updatedOverallPricePerKg <= 0) {
-                    showFlashMessage('Please enter a valid positive Overall Price per kg for editing.', 'error');
+                    showFlashMessage('Please enter a valid positive Overall Price per kg.', 'error');
                     return;
                 }
 
