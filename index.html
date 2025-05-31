@@ -485,7 +485,7 @@
                         }
                     }
                 }
-            }); // Corrected: Closing brace for forEach was missing in previous versions
+            });
         }
 
         // --- New Sale Form Specific Functions (must be global for inline calls) ---
@@ -852,22 +852,31 @@
     // This block runs once the HTML document is fully loaded.
     document.addEventListener('DOMContentLoaded', () => {
         // --- Firebase Configuration ---
-        // IMPORTANT: This has been updated with your provided Firebase config.
-        const firebaseConfig = {
-            apiKey: "AIzaSyDNWaOPTn1GiT8zAWFfXxiYuA-depTisCc",
-            authDomain: "my-banana-sales-app.firebaseapp.com",
-            projectId: "my-banana-sales-app",
-            storageBucket: "my-banana-sales-app.firebasestorage.app",
-            messagingSenderId: "461621717926",
-            appId: "1:461621717926:web:078f5f43bb35bcce93fd67",
-            measurementId: "G-PTW713Z5VN"
-        };
+        // IMPORTANT: Replace these placeholder values with your actual Firebase project configuration!
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDNWaOPTn1GiT8zAWFfXxiYuA-depTisCc",
+  authDomain: "my-banana-sales-app.firebaseapp.com",
+  projectId: "my-banana-sales-app",
+  storageBucket: "my-banana-sales-app.firebasestorage.app",
+  messagingSenderId: "461621717926",
+  appId: "1:461621717926:web:078f5f43bb35bcce93fd67",
+  measurementId: "G-PTW713Z5VN"
+};
 
-        // Log the firebaseConfig for debugging
+        // Log the firebaseConfig for debugging - check if it matches what you expect
         console.log("Firebase Config:", firebaseConfig);
 
         // Initialize Firebase and setup database references
         try {
+            // Check if firebase object exists before initializing
+            if (typeof firebase === 'undefined' || typeof firebase.initializeApp === 'undefined') {
+                console.error("Firebase SDK not loaded. Please check your network and script tags.");
+                document.getElementById('sales-list-container').innerHTML = '<p class="text-red-600 text-center py-4">Firebase SDK did not load. Check network and script tags in HTML.</p>';
+                showFlashMessage('Firebase SDK not found. Check console.', 'error');
+                return; // Stop further execution if SDK isn't loaded
+            }
+
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore(); // Assign to global db variable
             salesCollection = db.collection('sales'); // Assign to global salesCollection variable
@@ -878,14 +887,13 @@
             addInitialNewProductRow(); // For the 'Add New Sale' form initially
 
         } catch (initError) {
-            console.error("Firebase Initialization Error:", initError);
+            console.error("Firebase Initialization Error (caught):", initError);
             document.getElementById('sales-list-container').innerHTML = '<p class="text-red-600 text-center py-4">Error initializing Firebase. Please check your console for details and ensure your `firebaseConfig` is correct.</p>';
             showFlashMessage('Application initialization failed. Check console for Firebase config errors.', 'error');
             return; // Stop execution if Firebase fails to initialize
         }
 
-        // --- Event Listeners for Modals and Forms ---
-        // These are set up AFTER Firebase is initialized and the DOM is ready.
+        // --- Event Listeners for Modals and Forms (set up AFTER Firebase is initialized and DOM is ready) ---
 
         // Add Sale Modal
         document.getElementById('add-sale-btn').addEventListener('click', () => {
@@ -935,7 +943,7 @@
                     totalQuantity += quantity;
                 });
 
-                if (!isValid) return;
+                if (!isValid) return; // Stop if product data is invalid
 
                 if (isNaN(newOverallPricePerKg) || newOverallPricePerKg <= 0) {
                     showFlashMessage('Please enter a valid positive Overall Price per kg.', 'error');
@@ -1008,12 +1016,12 @@
                         showFlashMessage('Please fill all product fields with valid positive numbers for each entry.', 'error');
                         isValid = false;
                     }
-                    products.push({ bananaType, weightKg: weight, quantity: quantity });
-                    totalWeightKg += weight;
-                    totalQuantity += quantity;
+                    updatedProducts.push({ bananaType, weightKg: weight, quantity: quantity });
+                    updatedTotalWeightKg += weight;
+                    updatedTotalQuantity += quantity;
                 });
 
-                if (!isValid) return;
+                if (!isValid) return; // Stop if product data is invalid
 
                 if (isNaN(updatedOverallPricePerKg) || updatedOverallPricePerKg <= 0) {
                     showFlashMessage('Please enter a valid positive Overall Price per kg.', 'error');
@@ -1031,6 +1039,7 @@
                 const currentAmountReceived = currentSaleData.amountReceived || 0;
 
                 let updatedBalanceDue = updatedTotalAmount - currentAmountReceived;
+                // Ensure balance due doesn't go negative if amount received exceeds new total
                 if (updatedBalanceDue < 0) {
                     updatedBalanceDue = 0;
                 }
@@ -1043,7 +1052,7 @@
                     totalQuantity: updatedTotalQuantity,
                     overallPricePerKg: updatedOverallPricePerKg,
                     totalAmount: updatedTotalAmount,
-                    balanceDue: updatedBalanceDue
+                    balanceDue: updatedBalanceDue // Update balance due based on new total and existing received
                 };
 
                 await salesCollection.doc(saleId).update(updateData);
@@ -1053,7 +1062,7 @@
                 renderSalesList();
 
             } catch (error) {
-                console.error("Error updating sale: ", error);
+                console.error("Error updating sale: ", error); // THIS IS THE KEY ERROR MESSAGE
                 showFlashMessage('Error updating sale. Please try again.', 'error');
             }
         });
@@ -1098,7 +1107,7 @@
                 renderSalesList();
 
             } catch (error) {
-                console.error("Error updating payment: ", error);
+                console.error("Error updating payment: ", error); // THIS IS ANOTHER KEY ERROR MESSAGE
                 showFlashMessage('Error updating payment. Please try again.', 'error');
             }
         });
