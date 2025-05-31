@@ -452,6 +452,41 @@
         // --- GLOBAL UTILITIES AND CONSTANTS (Accessible throughout the script) ---
         const bananaTypes = ["Red Banana", "Robusta", "Matti", "Athan"];
 
+        // Get the Canvas application ID from the global variable
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        console.log("App ID:", appId); // Debugging: Log the appId
+
+        // --- Firebase Configuration ---
+        // IMPORTANT: This should be parsed from __firebase_config provided by the Canvas environment.
+        // DO NOT hardcode your Firebase config here if __firebase_config is available.
+        let firebaseConfig;
+        if (typeof __firebase_config !== 'undefined') {
+            try {
+                firebaseConfig = JSON.parse(__firebase_config);
+                console.log("Firebase Config (parsed from __firebase_config):", firebaseConfig);
+            } catch (e) {
+                console.error("Error parsing __firebase_config:", e);
+                showFlashMessage('Error initializing Firebase: Invalid configuration provided by environment.', 'error');
+                // Set to null to prevent further errors if parsing fails
+                firebaseConfig = null;
+            }
+        } else {
+            // Fallback for local testing or if __firebase_config is truly not defined (unlikely in Canvas)
+            // User MUST replace these placeholders with their actual Firebase project configuration for local testing.
+            firebaseConfig = {
+              apiKey: "AIzaSyDNWaOPTn1GiT8zAWFfXxiYuA-depTisCc", // Placeholder: Replace with your actual API Key
+              authDomain: "my-banana-sales-app.firebaseapp.com", // Placeholder: Replace with your actual Auth Domain
+              projectId: "my-banana-sales-app", // Placeholder: Replace with your actual Project ID
+              storageBucket: "my-banana-sales-app.firebasestorage.app", // Placeholder: Replace with your actual Storage Bucket
+              messagingSenderId: "461621717926", // Placeholder: Replace with your actual Messaging Sender ID
+              appId: "1:461621717926:web:078f5f43bb35bcce93fd67", // Placeholder: Replace with your actual App ID
+              measurementId: "G-PTW713Z5VN" // Placeholder: Replace with your actual Measurement ID
+            };
+            console.warn("Using hardcoded Firebase Config. Ensure __firebase_config is available in Canvas environment.");
+            console.log("Firebase Config (hardcoded fallback):", firebaseConfig);
+        }
+
+
         function showFlashMessage(message, type) {
             const flashContainer = document.getElementById('flash-message-container');
             flashContainer.textContent = message;
@@ -656,7 +691,7 @@
 
             document.querySelectorAll('#edit-products-container .product-row').forEach(row => {
                 const weightInput = row.querySelector('input[name="weight_kg[]"]');
-                const quantityInput = row.querySelector('input[name="quantity[]"]');
+                const quantityInput = row.querySelector('input[name="quantity[]']');
 
                 const weight = parseFloat(weightInput.value);
                 const quantity = parseInt(quantityInput.value);
@@ -698,6 +733,7 @@
         // Function to get and increment the bill number from Firestore
         async function getAndIncrementBillNumber() {
             try {
+                // Use the correct path for billCounterDocRef
                 const docSnap = await billCounterDocRef.get();
                 let currentNumber = 1; // Default starting number
 
@@ -963,24 +999,19 @@
     // --- Firebase Initialization and Main Event Listeners (on DOMContentLoaded) ---
     // This block runs once the HTML document is fully loaded.
     document.addEventListener('DOMContentLoaded', () => {
-        // --- Firebase Configuration ---
-        // IMPORTANT: Replace these placeholder values with your actual Firebase project configuration!
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDNWaOPTn1GiT8zAWFfXxiYuA-depTisCc",
-  authDomain: "my-banana-sales-app.firebaseapp.com",
-  projectId: "my-banana-sales-app",
-  storageBucket: "my-banana-sales-app.firebasestorage.app",
-  messagingSenderId: "461621717926",
-  appId: "1:461621717926:web:078f5f43bb35bcce93fd67",
-  measurementId: "G-PTW713Z5VN"
-};
-
         // Log the firebaseConfig for debugging - check if it matches what you expect
         console.log("Firebase Config:", firebaseConfig);
 
         // Initialize Firebase and setup database references
         try {
+            // Check if firebaseConfig is valid before proceeding
+            if (!firebaseConfig) {
+                console.error("Firebase configuration is missing or invalid. Cannot initialize Firebase.");
+                document.getElementById('sales-list-container').innerHTML = '<p class="text-red-600 text-center py-4">Firebase configuration missing. Check console for details.</p>';
+                showFlashMessage('Application initialization failed: Firebase config missing.', 'error');
+                return;
+            }
+
             // Check if firebase object exists before initializing
             if (typeof firebase === 'undefined' || typeof firebase.initializeApp === 'undefined') {
                 console.error("Firebase SDK not loaded. Please check your network and script tags.");
@@ -991,8 +1022,9 @@ const firebaseConfig = {
 
             firebase.initializeApp(firebaseConfig);
             db = firebase.firestore(); // Assign to global db variable
-            salesCollection = db.collection('sales'); // Assign to global salesCollection variable
-            billCounterDocRef = db.collection('metadata').doc('billCounter'); // Initialize bill counter reference
+            // Corrected collection paths to align with Canvas security rules
+            salesCollection = db.collection('artifacts').doc(appId).collection('public').collection('data').collection('sales');
+            billCounterDocRef = db.collection('artifacts').doc(appId).collection('public').collection('data').collection('metadata').doc('billCounter');
             console.log("Firebase initialized successfully.");
 
             // Initial render of sales data
@@ -1001,8 +1033,8 @@ const firebaseConfig = {
 
         } catch (initError) {
             console.error("Firebase Initialization Error (caught):", initError);
-            document.getElementById('sales-list-container').innerHTML = '<p class="text-red-600 text-center py-4">Error initializing Firebase. Please check your console for details and ensure your `firebaseConfig` is correct.</p>';
-            showFlashMessage('Application initialization failed. Check console for Firebase config errors.', 'error');
+            document.getElementById('sales-list-container').innerHTML = '<p class="text-red-600 text-center py-4">Error initializing Firebase. Please check your console for details and ensure your Firebase setup is correct.</p>';
+            showFlashMessage('Application initialization failed. Check console for Firebase errors.', 'error');
             return; // Stop execution if Firebase fails to initialize
         }
 
