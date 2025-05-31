@@ -149,8 +149,26 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Total Weight (kg)</label>
+                            <label class="block text-sm font-medium text-gray-700">Gross Weight (kg)</label>
                             <p id="new-total-weight" class="mt-1 block w-full p-2 bg-gray-200 rounded-md shadow-sm font-bold text-lg">
+                                0.00 kg
+                            </p>
+                        </div>
+                        <div>
+                            <label for="new-wastage-weight-kg" class="block text-sm font-medium text-gray-700">Wastage (Stem) (kg)</label>
+                            <input
+                                type="number"
+                                id="new-wastage-weight-kg"
+                                placeholder="e.g., 5"
+                                step="0.01"
+                                value="0"
+                                class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                                oninput="updateNewTotals()"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Net Billed Weight (kg)</label>
+                            <p id="new-net-billed-weight" class="mt-1 block w-full p-2 bg-gray-200 rounded-md shadow-sm font-bold text-lg text-blue-700">
                                 0.00 kg
                             </p>
                         </div>
@@ -160,7 +178,7 @@
                                 0
                             </p>
                         </div>
-                        <div>
+                        <div class="md:col-span-2">
                             <label for="new-overall-price-per-kg" class="block text-sm font-medium text-gray-700">Overall Price per kg (₹)</label>
                             <input
                                 type="number"
@@ -169,14 +187,16 @@
                                 step="0.01"
                                 class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
                                 required
+                                oninput="updateNewTotals()"
                             />
                         </div>
-                        <div class="col-span-full">
-                            <label class="block text-sm font-medium text-gray-700">Total Amount Due (₹)</label>
-                            <p id="new-total-amount-due" class="mt-1 block w-full p-2 bg-gray-200 rounded-md shadow-sm font-bold text-lg text-green-700">
-                                ₹0.00
-                            </p>
-                        </div>
+                    </div>
+
+                    <div class="col-span-full">
+                        <label class="block text-sm font-medium text-gray-700">Total Amount Due (₹)</label>
+                        <p id="new-total-amount-due" class="mt-1 block w-full p-2 bg-gray-200 rounded-md shadow-sm font-bold text-lg text-green-700">
+                            ₹0.00
+                        </p>
                     </div>
 
                     <div class="col-span-full flex justify-end mt-6 space-x-3">
@@ -227,8 +247,26 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Total Weight (kg)</label>
+                            <label class="block text-sm font-medium text-gray-700">Gross Weight (kg)</label>
                             <p id="edit-total-weight" class="mt-1 block w-full p-2 bg-gray-200 rounded-md shadow-sm font-bold text-lg">
+                                0.00 kg
+                            </p>
+                        </div>
+                        <div>
+                            <label for="edit-wastage-weight-kg" class="block text-sm font-medium text-gray-700">Wastage (Stem) (kg)</label>
+                            <input
+                                type="number"
+                                id="edit-wastage-weight-kg"
+                                placeholder="e.g., 5"
+                                step="0.01"
+                                value="0"
+                                class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                                oninput="updateEditTotals()"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Net Billed Weight (kg)</label>
+                            <p id="edit-net-billed-weight" class="mt-1 block w-full p-2 bg-gray-200 rounded-md shadow-sm font-bold text-lg text-blue-700">
                                 0.00 kg
                             </p>
                         </div>
@@ -238,7 +276,7 @@
                                 0
                             </p>
                         </div>
-                        <div>
+                        <div class="md:col-span-2">
                             <label for="edit-overall-price-per-kg" class="block text-sm font-medium text-gray-700">Overall Price per kg (₹)</label>
                             <input
                                 type="number"
@@ -247,14 +285,16 @@
                                 step="0.01"
                                 class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
                                 required
+                                oninput="updateEditTotals()"
                             />
                         </div>
-                        <div class="col-span-full">
-                            <label class="block text-sm font-medium text-gray-700">New Total Amount Due (₹)</label>
-                            <p id="edit-total-amount-due" class="mt-1 block w-full p-2 bg-gray-200 rounded-md shadow-sm font-bold text-lg text-green-700">
-                                ₹0.00
-                            </p>
-                        </div>
+                    </div>
+
+                    <div class="col-span-full">
+                        <label class="block text-sm font-medium text-gray-700">New Total Amount Due (₹)</label>
+                        <p id="edit-total-amount-due" class="mt-1 block w-full p-2 bg-gray-200 rounded-md shadow-sm font-bold text-lg text-green-700">
+                            ₹0.00
+                        </p>
                     </div>
 
                     <div class="col-span-full flex justify-end mt-6 space-x-3">
@@ -330,8 +370,20 @@
                             </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Total Weight:</td>
-                                <td class="border border-gray-300 px-4 py-2 text-right font-bold"><span id="bill-total-weight"></span> kg</td>
+                                <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Gross Weight:</td>
+                                <td class="border border-gray-300 px-4 py-2 text-right font-bold"><span id="bill-gross-weight"></span> kg</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Wastage (Stem) Weight:</td>
+                                <td class="border border-gray-300 px-4 py-2 text-right font-bold text-red-600">
+                                    - <span id="bill-wastage-weight"></span> kg
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Net Billed Weight:</td>
+                                <td class="border border-gray-300 px-4 py-2 text-right font-bold text-blue-700">
+                                    <span id="bill-net-billed-weight"></span> kg
+                                </td>
                             </tr>
                             <tr>
                                 <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Total Quantity:</td>
@@ -494,6 +546,8 @@
             const container = document.getElementById('new-products-container');
             container.innerHTML = createProductRowHtml(0, '', '', '', false);
             newProductRowCounter = 1;
+            document.getElementById('new-wastage-weight-kg').value = '0'; // Reset wastage
+            document.getElementById('new-overall-price-per-kg').value = ''; // Clear overall price
             updateNewTotals();
             updateRemoveButtons('new');
         }
@@ -516,7 +570,7 @@
             }
         }
         function updateNewTotals() {
-            let totalWeight = 0;
+            let totalGrossWeight = 0; // Renamed to gross weight
             let totalQuantity = 0;
 
             document.querySelectorAll('#new-products-container .product-row').forEach(row => {
@@ -527,21 +581,35 @@
                 const quantity = parseInt(quantityInput.value);
 
                 if (!isNaN(weight) && weight > 0) {
-                    totalWeight += weight;
+                    totalGrossWeight += weight;
                 }
                 if (!isNaN(quantity) && quantity > 0) {
                     totalQuantity += quantity;
                 }
             });
 
-            document.getElementById('new-total-weight').textContent = totalWeight.toFixed(2) + ' kg';
+            const wastageWeightInput = document.getElementById('new-wastage-weight-kg');
+            let wastageWeight = parseFloat(wastageWeightInput.value) || 0; // Get wastage, default to 0
+
+            let netBilledWeight = totalGrossWeight - wastageWeight;
+            if (netBilledWeight < 0) { // Ensure net weight doesn't go negative
+                netBilledWeight = 0;
+                // Optionally, adjust wastage to not exceed gross weight if desired for user input
+                // wastageWeightInput.value = totalGrossWeight.toFixed(2);
+                // wastageWeight = totalGrossWeight;
+            }
+
+            document.getElementById('new-total-weight').textContent = totalGrossWeight.toFixed(2) + ' kg'; // This is gross
+            // document.getElementById('new-wastage-weight-kg').value = wastageWeight.toFixed(2); // Keep value updated if auto-adjusted
+            document.getElementById('new-net-billed-weight').textContent = netBilledWeight.toFixed(2) + ' kg'; // Display net
             document.getElementById('new-total-quantity').textContent = totalQuantity;
 
             const overallPricePerKgInput = document.getElementById('new-overall-price-per-kg');
             const overallPricePerKg = parseFloat(overallPricePerKgInput.value);
             let totalAmountDue = 0;
-            if (!isNaN(totalWeight) && !isNaN(overallPricePerKg)) {
-                totalAmountDue = totalWeight * overallPricePerKg;
+            // Calculate total amount based on NET billed weight
+            if (!isNaN(netBilledWeight) && !isNaN(overallPricePerKg)) {
+                totalAmountDue = netBilledWeight * overallPricePerKg;
             }
             document.getElementById('new-total-amount-due').textContent = '₹' + totalAmountDue.toFixed(2);
         }
@@ -581,7 +649,7 @@
             }
         }
         function updateEditTotals() {
-            let totalWeight = 0;
+            let totalGrossWeight = 0; // Renamed to gross weight
             let totalQuantity = 0;
 
             document.querySelectorAll('#edit-products-container .product-row').forEach(row => {
@@ -592,21 +660,35 @@
                 const quantity = parseInt(quantityInput.value);
 
                 if (!isNaN(weight) && weight > 0) {
-                    totalWeight += weight;
+                    totalGrossWeight += weight;
                 }
                 if (!isNaN(quantity) && quantity > 0) {
                     totalQuantity += quantity;
                 }
             });
 
-            document.getElementById('edit-total-weight').textContent = totalWeight.toFixed(2) + ' kg';
+            const wastageWeightInput = document.getElementById('edit-wastage-weight-kg');
+            let wastageWeight = parseFloat(wastageWeightInput.value) || 0; // Get wastage, default to 0
+
+            let netBilledWeight = totalGrossWeight - wastageWeight;
+            if (netBilledWeight < 0) { // Ensure net weight doesn't go negative
+                netBilledWeight = 0;
+                // Optionally, adjust wastage to not exceed gross weight if desired for user input
+                // wastageWeightInput.value = totalGrossWeight.toFixed(2);
+                // wastageWeight = totalGrossWeight;
+            }
+
+            document.getElementById('edit-total-weight').textContent = totalGrossWeight.toFixed(2) + ' kg'; // This is gross
+            // document.getElementById('edit-wastage-weight-kg').value = wastageWeight.toFixed(2); // Keep value updated if auto-adjusted
+            document.getElementById('edit-net-billed-weight').textContent = netBilledWeight.toFixed(2) + ' kg'; // Display net
             document.getElementById('edit-total-quantity').textContent = totalQuantity;
 
             const overallPricePerKgInput = document.getElementById('edit-overall-price-per-kg');
             const overallPricePerKg = parseFloat(overallPricePerKgInput.value);
             let totalAmountDue = 0;
-            if (!isNaN(totalWeight) && !isNaN(overallPricePerKg)) {
-                totalAmountDue = totalWeight * overallPricePerKg;
+            // Calculate total amount based on NET billed weight
+            if (!isNaN(netBilledWeight) && !isNaN(overallPricePerKg)) {
+                totalAmountDue = netBilledWeight * overallPricePerKg;
             }
             document.getElementById('edit-total-amount-due').textContent = '₹' + totalAmountDue.toFixed(2);
         }
@@ -657,7 +739,8 @@
                             <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Bill No.</th>
                             <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Date</th>
                             <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Merchant</th>
-                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Total Weight (kg)</th>
+                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Gross Weight (kg)</th>
+                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Net Weight (kg)</th>
                             <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Total Quantity</th>
                             <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Overall Price/kg (₹)</th>
                             <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Total (₹)</th>
@@ -684,7 +767,8 @@
                         <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sale.billNumber}</td>
                         <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.date}</td>
                         <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.merchantName}</td>
-                        <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.totalWeightKg.toFixed(2)}</td>
+                        <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${(sale.totalWeightKg || 0).toFixed(2)}</td>
+                        <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${(sale.netWeightKg || 0).toFixed(2)}</td>
                         <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.totalQuantity}</td>
                         <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.overallPricePerKg.toFixed(2)}</td>
                         <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">₹${sale.totalAmount.toFixed(2)}</td>
@@ -739,8 +823,11 @@
             document.getElementById('edit-sale-date').value = saleToEdit.date;
             document.getElementById('edit-merchant-name').value = saleToEdit.merchantName;
             document.getElementById('edit-overall-price-per-kg').value = saleToEdit.overallPricePerKg.toFixed(2);
+            // Load wastage weight, default to 0 if not present (for old sales)
+            document.getElementById('edit-wastage-weight-kg').value = (saleToEdit.wastageWeightKg || 0).toFixed(2);
 
-            loadEditProductRows(saleToEdit.products || []);
+
+            loadEditProductRows(saleToEdit.products || []); // This also calls updateEditTotals()
             document.getElementById('edit-sale-modal').classList.remove('hidden');
 
         } catch (error) {
@@ -806,7 +893,11 @@
                 productsTbody.appendChild(row);
             });
 
-            document.getElementById('bill-total-weight').textContent = saleToView.totalWeightKg.toFixed(2);
+            // Update the bill to show Gross, Wastage, and Net Billed Weights
+            document.getElementById('bill-gross-weight').textContent = (saleToView.totalWeightKg || 0).toFixed(2);
+            document.getElementById('bill-wastage-weight').textContent = (saleToView.wastageWeightKg || 0).toFixed(2);
+            document.getElementById('bill-net-billed-weight').textContent = (saleToView.netWeightKg || 0).toFixed(2);
+
             document.getElementById('bill-total-quantity').textContent = saleToView.totalQuantity;
             document.getElementById('bill-overall-price-per-kg').textContent = saleToView.overallPricePerKg.toFixed(2);
             document.getElementById('bill-total-amount').textContent = saleToView.totalAmount.toFixed(2);
@@ -900,6 +991,7 @@ const firebaseConfig = {
             document.getElementById('new-sale-date').value = '';
             document.getElementById('new-merchant-name').value = '';
             document.getElementById('new-overall-price-per-kg').value = '';
+            document.getElementById('new-wastage-weight-kg').value = '0'; // Reset wastage on new sale
             addInitialNewProductRow();
             document.getElementById('add-sale-modal').classList.remove('hidden');
         });
@@ -908,16 +1000,20 @@ const firebaseConfig = {
         });
         document.getElementById('add-new-product-row-btn').addEventListener('click', addNewProductRow);
         document.getElementById('new-overall-price-per-kg').addEventListener('input', updateNewTotals);
+        // Add listener for wastage input as well
+        document.getElementById('new-wastage-weight-kg').addEventListener('input', updateNewTotals);
+
         document.getElementById('add-sale-form').addEventListener('submit', async (event) => {
             event.preventDefault();
             try {
                 const newSaleDate = document.getElementById('new-sale-date').value;
                 const newMerchantName = document.getElementById('new-merchant-name').value;
                 const newOverallPricePerKg = parseFloat(document.getElementById('new-overall-price-per-kg').value);
+                const newWastageWeight = parseFloat(document.getElementById('new-wastage-weight-kg').value) || 0; // Get wastage weight
 
                 const productRows = document.querySelectorAll('#new-products-container .product-row');
                 const products = [];
-                let totalWeightKg = 0;
+                let totalGrossWeightKg = 0; // Renamed to gross
                 let totalQuantity = 0;
 
                 let isValid = true;
@@ -939,25 +1035,34 @@ const firebaseConfig = {
                         isValid = false;
                     }
                     products.push({ bananaType, weightKg: weight, quantity: quantity });
-                    totalWeightKg += weight;
+                    totalGrossWeightKg += weight;
                     totalQuantity += quantity;
                 });
 
                 if (!isValid) return; // Stop if product data is invalid
+
+                // Calculate Net Billed Weight
+                let netBilledWeightKg = totalGrossWeightKg - newWastageWeight;
+                if (netBilledWeightKg < 0) { // Ensure net weight doesn't go negative
+                    netBilledWeightKg = 0;
+                    showFlashMessage('Wastage weight cannot exceed gross weight. Net billed weight adjusted to 0.', 'error');
+                }
 
                 if (isNaN(newOverallPricePerKg) || newOverallPricePerKg <= 0) {
                     showFlashMessage('Please enter a valid positive Overall Price per kg.', 'error');
                     return;
                 }
 
-                const totalAmount = totalWeightKg * newOverallPricePerKg;
+                const totalAmount = netBilledWeightKg * newOverallPricePerKg; // Calculate total amount based on NET billed weight
 
                 const newSale = {
                     billNumber: `BILL-${Date.now()}`,
                     date: newSaleDate,
                     merchantName: newMerchantName,
                     products: products,
-                    totalWeightKg: totalWeightKg,
+                    totalWeightKg: totalGrossWeightKg, // Store gross weight
+                    wastageWeightKg: newWastageWeight, // Store wastage weight
+                    netWeightKg: netBilledWeightKg, // Store net billed weight
                     totalQuantity: totalQuantity,
                     overallPricePerKg: newOverallPricePerKg,
                     totalAmount: totalAmount,
@@ -981,6 +1086,9 @@ const firebaseConfig = {
         // Edit Sale Modal
         document.getElementById('add-edit-product-row-btn').addEventListener('click', addEditProductRow);
         document.getElementById('edit-overall-price-per-kg').addEventListener('input', updateEditTotals);
+        // Add listener for wastage input as well
+        document.getElementById('edit-wastage-weight-kg').addEventListener('input', updateEditTotals);
+
         document.getElementById('cancel-edit-sale-btn').addEventListener('click', () => {
             document.getElementById('edit-sale-modal').classList.add('hidden');
         });
@@ -992,10 +1100,11 @@ const firebaseConfig = {
                 const updatedDate = document.getElementById('edit-sale-date').value;
                 const updatedMerchant = document.getElementById('edit-merchant-name').value;
                 const updatedOverallPricePerKg = parseFloat(document.getElementById('edit-overall-price-per-kg').value);
+                const updatedWastageWeight = parseFloat(document.getElementById('edit-wastage-weight-kg').value) || 0; // Get wastage weight
 
                 const productRows = document.querySelectorAll('#edit-products-container .product-row');
                 const updatedProducts = [];
-                let updatedTotalWeightKg = 0;
+                let updatedTotalGrossWeightKg = 0; // Renamed to gross
                 let updatedTotalQuantity = 0;
 
                 let isValid = true;
@@ -1017,18 +1126,25 @@ const firebaseConfig = {
                         isValid = false;
                     }
                     updatedProducts.push({ bananaType, weightKg: weight, quantity: quantity });
-                    updatedTotalWeightKg += weight;
+                    updatedTotalGrossWeightKg += weight;
                     updatedTotalQuantity += quantity;
                 });
 
                 if (!isValid) return; // Stop if product data is invalid
+
+                // Calculate Net Billed Weight
+                let updatedNetBilledWeightKg = updatedTotalGrossWeightKg - updatedWastageWeight;
+                if (updatedNetBilledWeightKg < 0) {
+                    updatedNetBilledWeightKg = 0;
+                    showFlashMessage('Wastage weight cannot exceed gross weight. Net billed weight adjusted to 0.', 'error');
+                }
 
                 if (isNaN(updatedOverallPricePerKg) || updatedOverallPricePerKg <= 0) {
                     showFlashMessage('Please enter a valid positive Overall Price per kg.', 'error');
                     return;
                 }
 
-                const updatedTotalAmount = updatedTotalWeightKg * updatedOverallPricePerKg;
+                const updatedTotalAmount = updatedNetBilledWeightKg * updatedOverallPricePerKg; // Use netBilledWeight
 
                 const currentSaleDoc = await salesCollection.doc(saleId).get();
                 if (!currentSaleDoc.exists) {
@@ -1039,7 +1155,6 @@ const firebaseConfig = {
                 const currentAmountReceived = currentSaleData.amountReceived || 0;
 
                 let updatedBalanceDue = updatedTotalAmount - currentAmountReceived;
-                // Ensure balance due doesn't go negative if amount received exceeds new total
                 if (updatedBalanceDue < 0) {
                     updatedBalanceDue = 0;
                 }
@@ -1048,11 +1163,13 @@ const firebaseConfig = {
                     date: updatedDate,
                     merchantName: updatedMerchant,
                     products: updatedProducts,
-                    totalWeightKg: updatedTotalWeightKg,
+                    totalWeightKg: updatedTotalGrossWeightKg, // Store updated gross weight
+                    wastageWeightKg: updatedWastageWeight, // Store updated wastage weight
+                    netWeightKg: updatedNetBilledWeightKg, // Store updated net billed weight
                     totalQuantity: updatedTotalQuantity,
                     overallPricePerKg: updatedOverallPricePerKg,
                     totalAmount: updatedTotalAmount,
-                    balanceDue: updatedBalanceDue // Update balance due based on new total and existing received
+                    balanceDue: updatedBalanceDue
                 };
 
                 await salesCollection.doc(saleId).update(updateData);
@@ -1062,7 +1179,7 @@ const firebaseConfig = {
                 renderSalesList();
 
             } catch (error) {
-                console.error("Error updating sale: ", error); // THIS IS THE KEY ERROR MESSAGE
+                console.error("Error updating sale: ", error);
                 showFlashMessage('Error updating sale. Please try again.', 'error');
             }
         });
@@ -1107,7 +1224,7 @@ const firebaseConfig = {
                 renderSalesList();
 
             } catch (error) {
-                console.error("Error updating payment: ", error); // THIS IS ANOTHER KEY ERROR MESSAGE
+                console.error("Error updating payment: ", error);
                 showFlashMessage('Error updating payment. Please try again.', 'error');
             }
         });
