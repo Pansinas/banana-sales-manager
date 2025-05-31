@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Banana Sales Manager</title>
+    <title>Banana Sales Manager (Firebase)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -77,7 +81,7 @@
         <div id="flash-message-container" class="flash-message"></div>
 
         <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 mb-8">
-            <h1 class="text-3xl sm:text-4xl font-bold text-center text-green-700 mb-6">Banana Sales Manager</h1>
+            <h1 class="text-3xl sm:text-4xl font-bold text-center text-green-700 mb-6">Banana Sales Manager (Firebase)</h1>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div class="bg-green-50 p-4 rounded-lg shadow-sm text-center">
@@ -103,7 +107,7 @@
             <div class="p-6 bg-white rounded-lg shadow-md">
                 <h2 class="text-2xl font-semibold text-green-700 mb-4">All Sales Records</h2>
                 <div id="sales-list-container" class="overflow-x-auto">
-                    <p class="text-gray-600 text-center py-4">No sales recorded yet. Add a new sale above!</p>
+                    <p class="text-gray-600 text-center py-4">Loading sales data...</p>
                 </div>
             </div>
         </div>
@@ -386,170 +390,219 @@
     </div>
 
     <script>
-        const STORAGE_KEY = 'bananaSalesData';
-        const bananaTypes = ["Red Banana", "Robusta", "Matti", "Athan"];
+        // --- Firebase Configuration ---
+        // IMPORTANT: Replace this with your actual Firebase config from your Firebase console
+        // This configuration allows your app to connect to YOUR specific Firebase project.
+        // If these values are incorrect or missing, the app will not be able to connect to Firestore.
+        const firebaseConfig = {
+            apiKey: "YOUR_FIREBASE_API_KEY", // <--- REPLACE THIS
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com", // <--- REPLACE THIS
+            projectId: "YOUR_PROJECT_ID", // <--- REPLACE THIS
+            storageBucket: "YOUR_PROJECT_ID.appspot.com", // <--- REPLACE THIS
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID", // <--- REPLACE THIS
+            appId: "YOUR_APP_ID", // <--- REPLACE THIS
+            // measurementId: "G-XXXXXXXXXX" // Include if present in your config
+        };
 
-        // --- Utility Functions ---
-        function getSales() {
-            const salesJson = localStorage.getItem(STORAGE_KEY);
-            return salesJson ? JSON.parse(salesJson) : [];
-        }
+        // Log the firebaseConfig to the console for debugging purposes.
+        // If this log shows placeholders or an empty object, your config is not set up correctly.
+        console.log("Firebase Config:", firebaseConfig);
 
-        function saveSales(sales) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(sales));
-        }
+        // Initialize Firebase
+        try {
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.firestore();
+            const salesCollection = db.collection('sales'); // Reference to your 'sales' collection
+            console.log("Firebase initialized successfully."); // Log successful initialization
 
-        function showFlashMessage(message, type) {
-            const flashContainer = document.getElementById('flash-message-container');
-            flashContainer.textContent = message;
-            flashContainer.className = `flash-message ${type} block`;
-            setTimeout(() => {
-                flashContainer.className = `flash-message ${type} hidden`;
-            }, 5000); // Hide after 5 seconds
-        }
+            const bananaTypes = ["Red Banana", "Robusta", "Matti", "Athan"];
 
-        function generateUniqueId() {
-            return Date.now().toString(36) + Math.random().toString(36).substring(2);
-        }
-
-        // --- Render Sales List ---
-        function renderSalesList() {
-            const sales = getSales();
-            const salesListContainer = document.getElementById('sales-list-container');
-            salesListContainer.innerHTML = ''; // Clear previous content
-
-            if (sales.length === 0) {
-                salesListContainer.innerHTML = '<p class="text-gray-600 text-center py-4">No sales recorded yet. Add a new sale above!</p>';
-                document.getElementById('total-sales-amount').textContent = '₹0.00';
-                document.getElementById('total-amount-received').textContent = '₹0.00';
-                document.getElementById('total-outstanding').textContent = '₹0.00';
-                return;
+            // --- Utility Functions ---
+            function showFlashMessage(message, type) {
+                const flashContainer = document.getElementById('flash-message-container');
+                flashContainer.textContent = message;
+                flashContainer.className = `flash-message ${type} block`;
+                setTimeout(() => {
+                    flashContainer.className = `flash-message ${type} hidden`;
+                }, 5000); // Hide after 5 seconds
             }
 
-            let totalSalesAmount = 0;
-            let totalAmountReceived = 0;
-            let totalOutstanding = 0;
+            // --- Render Sales List (FETCHES FROM FIREBASE) ---
+            async function renderSalesList() {
+                const salesListContainer = document.getElementById('sales-list-container');
+                salesListContainer.innerHTML = '<p class="text-gray-600 text-center py-4">Loading sales data...</p>';
 
-            const table = document.createElement('table');
-            table.className = 'min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden';
-            table.innerHTML = `
-                <thead class="bg-green-100">
-                    <tr>
-                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Bill No.</th>
-                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Date</th>
-                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Merchant</th>
-                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Total Weight (kg)</th>
-                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Total Quantity</th>
-                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Overall Price/kg (₹)</th>
-                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Total (₹)</th>
-                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Received (₹)</th>
-                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Balance (₹)</th>
-                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200" id="sales-table-body">
-                </tbody>
-            `;
-            salesListContainer.appendChild(table);
+                try {
+                    // Fetch sales from Firestore, ordered by date (newest first)
+                    const snapshot = await salesCollection.orderBy('date', 'desc').get();
+                    const sales = snapshot.docs.map(doc => ({
+                        id: doc.id, // Firestore document ID
+                        ...doc.data()
+                    }));
 
-            const salesTableBody = document.getElementById('sales-table-body');
-            sales.forEach(sale => {
-                totalSalesAmount += sale.totalAmount;
-                totalAmountReceived += sale.amountReceived;
-                totalOutstanding += sale.balanceDue;
+                    if (sales.length === 0) {
+                        salesListContainer.innerHTML = '<p class="text-gray-600 text-center py-4">No sales recorded yet. Add a new sale above!</p>';
+                        document.getElementById('total-sales-amount').textContent = '₹0.00';
+                        document.getElementById('total-amount-received').textContent = '₹0.00';
+                        document.getElementById('total-outstanding').textContent = '₹0.00';
+                        return;
+                    }
 
-                const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50';
-                row.innerHTML = `
-                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sale.billNumber}</td>
-                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.date}</td>
-                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.merchantName}</td>
-                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.totalWeightKg.toFixed(2)}</td>
-                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.totalQuantity}</td>
-                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.overallPricePerKg.toFixed(2)}</td>
-                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">₹${sale.totalAmount.toFixed(2)}</td>
-                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-blue-600">₹${sale.amountReceived.toFixed(2)}</td>
-                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-bold ${sale.balanceDue > 0 ? 'text-red-600' : 'text-green-600'}">₹${sale.balanceDue.toFixed(2)}</td>
-                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                            <button onclick="openEditModal('${sale.id}')" class="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-xs sm:text-sm">
-                                Edit
-                            </button>
-                            <button onclick="openPaymentModal('${sale.id}')" class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs sm:text-sm">
-                                Payment
-                            </button>
-                            <button onclick="openBillModal('${sale.id}')" class="px-3 py-1 bg-purple-500 text-white rounded-md hover:bg-purple-600 text-xs sm:text-sm">
-                                Bill
-                            </button>
-                            <button onclick="openConfirmModal('delete', '${sale.id}')" class="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-xs sm:text-sm">
-                                Delete
-                            </button>
-                        </div>
-                    </td>
-                `;
-                salesTableBody.appendChild(row);
-            });
+                    let totalSalesAmount = 0;
+                    let totalAmountReceived = 0;
+                    let totalOutstanding = 0;
 
-            document.getElementById('total-sales-amount').textContent = `₹${totalSalesAmount.toFixed(2)}`;
-            document.getElementById('total-amount-received').textContent = `₹${totalAmountReceived.toFixed(2)}`;
-            document.getElementById('total-outstanding').textContent = `₹${totalOutstanding.toFixed(2)}`;
+                    const table = document.createElement('table');
+                    table.className = 'min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden';
+                    table.innerHTML = `
+                        <thead class="bg-green-100">
+                            <tr>
+                                <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Bill No.</th>
+                                <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Date</th>
+                                <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Merchant</th>
+                                <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Total Weight (kg)</th>
+                                <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Total Quantity</th>
+                                <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Overall Price/kg (₹)</th>
+                                <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Total (₹)</th>
+                                <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Received (₹)</th>
+                                <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Balance (₹)</th>
+                                <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200" id="sales-table-body">
+                        </tbody>
+                    `;
+                    salesListContainer.innerHTML = ''; // Clear loading message
+                    salesListContainer.appendChild(table);
+
+                    const salesTableBody = document.getElementById('sales-table-body');
+                    sales.forEach(sale => {
+                        totalSalesAmount += sale.totalAmount;
+                        totalAmountReceived += sale.amountReceived;
+                        totalOutstanding += sale.balanceDue;
+
+                        const row = document.createElement('tr');
+                        row.className = 'hover:bg-gray-50';
+                        row.innerHTML = `
+                            <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sale.billNumber}</td>
+                            <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.date}</td>
+                            <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.merchantName}</td>
+                            <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.totalWeightKg.toFixed(2)}</td>
+                            <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.totalQuantity}</td>
+                            <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.overallPricePerKg.toFixed(2)}</td>
+                            <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">₹${sale.totalAmount.toFixed(2)}</td>
+                            <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-blue-600">₹${sale.amountReceived.toFixed(2)}</td>
+                            <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-bold ${sale.balanceDue > 0 ? 'text-red-600' : 'text-green-600'}">₹${sale.balanceDue.toFixed(2)}</td>
+                            <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                                    <button onclick="openEditModal('${sale.id}')" class="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-xs sm:text-sm">
+                                        Edit
+                                    </button>
+                                    <button onclick="openPaymentModal('${sale.id}')" class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs sm:text-sm">
+                                        Payment
+                                    </button>
+                                    <button onclick="openBillModal('${sale.id}')" class="px-3 py-1 bg-purple-500 text-white rounded-md hover:bg-purple-600 text-xs sm:text-sm">
+                                        Bill
+                                    </button>
+                                    <button onclick="openConfirmModal('delete', '${sale.id}')" class="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-xs sm:text-sm">
+                                        Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    salesTableBody.appendChild(row);
+                });
+
+                document.getElementById('total-sales-amount').textContent = `₹${totalSalesAmount.toFixed(2)}`;
+                document.getElementById('total-amount-received').textContent = `₹${totalAmountReceived.toFixed(2)}`;
+                document.getElementById('total-outstanding').textContent = `₹${totalOutstanding.toFixed(2)}`;
+
+            } catch (error) {
+                console.error("Error fetching sales: ", error);
+                showFlashMessage('Error loading sales data. Please check your Firebase setup and network connection.', 'error');
+                salesListContainer.innerHTML = '<p class="text-red-600 text-center py-4">Failed to load sales data.</p>';
+            }
         }
 
         // --- Product Row Management (for Add/Edit Forms) ---
         function createProductRowHtml(index, bananaType = '', weightKg = '', quantity = '', isEdit = false) {
             const idPrefix = isEdit ? 'edit-' : 'new-';
             const onInputChange = isEdit ? 'updateEditTotals()' : 'updateNewTotals()';
-            const removeButtonHtml = (index > 0 || (isEdit && getSales().find(s => s.id === document.getElementById('edit-sale-id').value)?.products?.length > 1)) ?
-                `<div class="flex justify-end sm:justify-start">
+
+            const removeButtonHtml = `
+                <div class="flex justify-end sm:justify-start">
                     <button type="button" onclick="${isEdit ? 'removeEditProductRow(this)' : 'removeNewProductRow(this)'}" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm">
                         Remove
                     </button>
-                </div>` :
-                '<div class="flex justify-end sm:justify-start"></div>'; // Empty div for alignment
+                </div>`;
 
             return `
-                <div>
-                    <label for="${idPrefix}banana_type-${index}" class="block text-sm font-medium text-gray-700">Banana Type</label>
-                    <select
-                        id="${idPrefix}banana_type-${index}"
-                        name="banana_type[]"
-                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                        required
-                    >
-                        <option value="">Select Type</option>
-                        ${bananaTypes.map(type => `<option value="${type}" ${bananaType === type ? 'selected' : ''}>${type}</option>`).join('')}
-                    </select>
+                <div class="product-row grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3 p-3 bg-gray-50 rounded-md shadow-sm items-end" id="product-row-${idPrefix}${index}">
+                    <div>
+                        <label for="${idPrefix}banana_type-${index}" class="block text-sm font-medium text-gray-700">Banana Type</label>
+                        <select
+                            id="${idPrefix}banana_type-${index}"
+                            name="banana_type[]"
+                            class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                            required
+                        >
+                            <option value="">Select Type</option>
+                            ${bananaTypes.map(type => `<option value="${type}" ${bananaType === type ? 'selected' : ''}>${type}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="${idPrefix}weight_kg-${index}" class="block text-sm font-medium text-gray-700">Weight (kg)</label>
+                        <input
+                            type="number"
+                            id="${idPrefix}weight_kg-${index}"
+                            name="weight_kg[]"
+                            value="${weightKg}"
+                            placeholder="e.g., 100"
+                            step="0.01"
+                            class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                            required
+                            oninput="${onInputChange}"
+                        />
+                    </div>
+                    <div>
+                        <label for="${idPrefix}quantity-${index}" class="block text-sm font-medium text-gray-700">Quantity</label>
+                        <input
+                            type="number"
+                            id="${idPrefix}quantity-${index}"
+                            name="quantity[]"
+                            value="${quantity}"
+                            placeholder="e.g., 50"
+                            step="1"
+                            class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                            required
+                            oninput="${onInputChange}"
+                        />
+                    </div>
+                    ${removeButtonHtml}
                 </div>
-                <div>
-                    <label for="${idPrefix}weight_kg-${index}" class="block text-sm font-medium text-gray-700">Weight (kg)</label>
-                    <input
-                        type="number"
-                        id="${idPrefix}weight_kg-${index}"
-                        name="weight_kg[]"
-                        value="${weightKg}"
-                        placeholder="e.g., 100"
-                        step="0.01"
-                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                        required
-                        oninput="${onInputChange}"
-                    />
-                </div>
-                <div>
-                    <label for="${idPrefix}quantity-${index}" class="block text-sm font-medium text-gray-700">Quantity</label>
-                    <input
-                        type="number"
-                        id="${idPrefix}quantity-${index}"
-                        name="quantity[]"
-                        value="${quantity}"
-                        placeholder="e.g., 50"
-                        step="1"
-                        class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                        required
-                        oninput="${onInputChange}"
-                    />
-                </div>
-                ${removeButtonHtml}
             `;
+        }
+
+        // Function to update visibility of remove buttons based on row count
+        function updateRemoveButtons(formType) {
+            const containerId = formType === 'new' ? 'new-products-container' : 'edit-products-container';
+            const container = document.getElementById(containerId);
+            const productRows = container.querySelectorAll('.product-row');
+
+            productRows.forEach(row => {
+                const removeButtonDiv = row.querySelector('.flex.justify-end.sm\\:justify-start');
+                if (removeButtonDiv) {
+                    const removeButton = removeButtonDiv.querySelector('button');
+                    if (removeButton) {
+                        if (productRows.length <= 1) {
+                            removeButton.style.display = 'none'; // Hide if only one row
+                        } else {
+                            removeButton.style.display = 'inline-block'; // Show if more than one row
+                        }
+                    }
+                }
+            });
         }
 
         // --- Add Sale Form Logic ---
@@ -557,29 +610,30 @@
 
         function addInitialNewProductRow() {
             const container = document.getElementById('new-products-container');
-            container.innerHTML = ''; // Clear existing
-            const newRowDiv = document.createElement('div');
-            newRowDiv.className = 'product-row grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3 p-3 bg-gray-50 rounded-md shadow-sm items-end';
-            newRowDiv.innerHTML = createProductRowHtml(0, '', '', '', false);
-            container.appendChild(newRowDiv);
+            container.innerHTML = createProductRowHtml(0, '', '', '', false);
             newProductRowCounter = 1; // Reset counter
             updateNewTotals();
+            updateRemoveButtons('new');
         }
 
         function addNewProductRow() {
             const container = document.getElementById('new-products-container');
-            const newRowDiv = document.createElement('div');
-            newRowDiv.className = 'product-row grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3 p-3 bg-gray-50 rounded-md shadow-sm items-end';
-            newRowDiv.innerHTML = createProductRowHtml(newProductRowCounter, '', '', '', false);
-            container.appendChild(newRowDiv);
+            container.insertAdjacentHTML('beforeend', createProductRowHtml(newProductRowCounter, '', '', '', false));
             newProductRowCounter++;
             updateNewTotals();
+            updateRemoveButtons('new');
         }
 
         function removeNewProductRow(button) {
-            const row = button.closest('.product-row');
-            row.remove();
-            updateNewTotals();
+            const container = document.getElementById('new-products-container');
+            if (container.childElementCount > 1) { // Only remove if there's more than one row
+                const row = button.closest('.product-row');
+                row.remove();
+                updateNewTotals();
+                updateRemoveButtons('new');
+            } else {
+                showFlashMessage('Cannot remove the last product row. A sale must have at least one product.', 'error');
+            }
         }
 
         function updateNewTotals() {
@@ -629,101 +683,114 @@
 
         document.getElementById('new-overall-price-per-kg').addEventListener('input', updateNewTotals);
 
-        document.getElementById('add-sale-form').addEventListener('submit', (event) => {
+        document.getElementById('add-sale-form').addEventListener('submit', async (event) => {
             event.preventDefault();
 
-            const sales = getSales();
+            try {
+                const newSaleDate = document.getElementById('new-sale-date').value;
+                const newMerchantName = document.getElementById('new-merchant-name').value;
+                const newOverallPricePerKg = parseFloat(document.getElementById('new-overall-price-per-kg').value);
 
-            const newSaleDate = document.getElementById('new-sale-date').value;
-            const newMerchantName = document.getElementById('new-merchant-name').value;
-            const newOverallPricePerKg = parseFloat(document.getElementById('new-overall-price-per-kg').value);
+                const productRows = document.querySelectorAll('#new-products-container .product-row');
+                const products = [];
+                let totalWeightKg = 0;
+                let totalQuantity = 0;
 
-            const productRows = document.querySelectorAll('#new-products-container .product-row');
-            const products = [];
-            let totalWeightKg = 0;
-            let totalQuantity = 0;
-
-            let isValid = true;
-            if (productRows.length === 0) {
-                showFlashMessage('Please add at least one banana product.', 'error');
-                isValid = false;
-            }
-
-            productRows.forEach(row => {
-                const bananaType = row.querySelector('select[name="banana_type[]"]').value;
-                const weightKg = parseFloat(row.querySelector('input[name="weight_kg[]"]').value);
-                const quantity = parseInt(row.querySelector('input[name="quantity[]"]').value);
-
-                if (!bananaType || isNaN(weightKg) || weightKg <= 0 || isNaN(quantity) || quantity <= 0) {
-                    showFlashMessage('Please fill all product fields with valid positive numbers for each entry.', 'error');
+                let isValid = true;
+                if (productRows.length === 0) {
+                    showFlashMessage('Please add at least one banana product.', 'error');
                     isValid = false;
                 }
-                products.push({ bananaType, weightKg, quantity });
-                totalWeightKg += weightKg;
-                totalQuantity += quantity;
-            });
 
-            if (!isValid) return;
+                productRows.forEach(row => {
+                    const bananaType = row.querySelector('select[name="banana_type[]"]').value;
+                    const weightInput = row.querySelector('input[name="weight_kg[]"]');
+                    const quantityInput = row.querySelector('input[name="quantity[]"]');
 
-            if (isNaN(newOverallPricePerKg) || newOverallPricePerKg <= 0) {
-                showFlashMessage('Please enter a valid positive Overall Price per kg.', 'error');
-                return;
+                    const weight = parseFloat(weightInput.value);
+                    const quantity = parseInt(quantityInput.value);
+
+                    if (!bananaType || isNaN(weight) || weight <= 0 || isNaN(quantity) || quantity <= 0) {
+                        showFlashMessage('Please fill all product fields with valid positive numbers for each entry.', 'error');
+                        isValid = false;
+                    }
+                    products.push({ bananaType, weightKg: weight, quantity: quantity });
+                    totalWeightKg += weight;
+                    totalQuantity += quantity;
+                });
+
+                if (!isValid) return;
+
+                if (isNaN(newOverallPricePerKg) || newOverallPricePerKg <= 0) {
+                    showFlashMessage('Please enter a valid positive Overall Price per kg.', 'error');
+                    return;
+                }
+
+                const totalAmount = totalWeightKg * newOverallPricePerKg;
+
+                const newSale = {
+                    // Firebase will auto-generate doc.id, but we generate bill number here
+                    billNumber: `BILL-${Date.now()}`,
+                    date: newSaleDate,
+                    merchantName: newMerchantName,
+                    products: products,
+                    totalWeightKg: totalWeightKg,
+                    totalQuantity: totalQuantity,
+                    overallPricePerKg: newOverallPricePerKg,
+                    totalAmount: totalAmount,
+                    amountReceived: 0,
+                    balanceDue: totalAmount
+                };
+
+                await salesCollection.add(newSale); // Add to Firebase
+                showFlashMessage('Sale added successfully!', 'success');
+
+                document.getElementById('add-sale-modal').classList.add('hidden');
+                document.getElementById('add-sale-form').reset(); // Clear form
+                renderSalesList(); // Re-render list with new data
+
+            } catch (error) {
+                console.error("Error adding sale: ", error);
+                showFlashMessage('Error adding sale. Please try again.', 'error');
             }
-
-            const totalAmount = totalWeightKg * newOverallPricePerKg;
-
-            const newSale = {
-                id: generateUniqueId(),
-                billNumber: `BILL-${Date.now()}`,
-                date: newSaleDate,
-                merchantName: newMerchantName,
-                products: products,
-                totalWeightKg: totalWeightKg,
-                totalQuantity: totalQuantity,
-                overallPricePerKg: newOverallPricePerKg,
-                totalAmount: totalAmount,
-                amountReceived: 0,
-                balanceDue: totalAmount
-            };
-
-            sales.unshift(newSale); // Add to the beginning for most recent first
-            saveSales(sales);
-            renderSalesList();
-            document.getElementById('add-sale-modal').classList.add('hidden');
-            showFlashMessage('Sale added successfully!', 'success');
         });
 
         // --- Edit Sale Form Logic ---
-        let editProductRowCounter = 0; // Will be set when modal opens
+        let editProductRowCounter = 0;
 
         function loadEditProductRows(products) {
             const container = document.getElementById('edit-products-container');
             container.innerHTML = ''; // Clear existing
             editProductRowCounter = 0;
+            if (products.length === 0) { // Ensure at least one row
+                products.push({ bananaType: '', weightKg: '', quantity: '' });
+            }
             products.forEach(product => {
-                const newRowDiv = document.createElement('div');
-                newRowDiv.className = 'product-row grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3 p-3 bg-gray-50 rounded-md shadow-sm items-end';
-                newRowDiv.innerHTML = createProductRowHtml(editProductRowCounter, product.bananaType, product.weightKg, product.quantity, true);
-                container.appendChild(newRowDiv);
+                container.insertAdjacentHTML('beforeend', createProductRowHtml(editProductRowCounter, product.bananaType, product.weightKg, product.quantity, true));
                 editProductRowCounter++;
             });
             updateEditTotals();
+            updateRemoveButtons('edit');
         }
 
         function addEditProductRow() {
             const container = document.getElementById('edit-products-container');
-            const newRowDiv = document.createElement('div');
-            newRowDiv.className = 'product-row grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3 p-3 bg-gray-50 rounded-md shadow-sm items-end';
-            newRowDiv.innerHTML = createProductRowHtml(editProductRowCounter, '', '', '', true);
-            container.appendChild(newRowDiv);
+            container.insertAdjacentHTML('beforeend', createProductRowHtml(editProductRowCounter, '', '', '', true));
             editProductRowCounter++;
             updateEditTotals();
+            updateRemoveButtons('edit');
         }
 
         function removeEditProductRow(button) {
-            const row = button.closest('.product-row');
-            row.remove();
-            updateEditTotals();
+            const container = document.getElementById('edit-products-container');
+            if (container.childElementCount > 1) { // Only remove if there's more than one row
+                const row = button.closest('.product-row');
+                row.remove();
+                updateEditTotals();
+                updateRemoveButtons('edit');
+            } else {
+                showFlashMessage('Cannot remove the last product row. A sale must have at least one product.', 'error');
+            }
         }
 
         function updateEditTotals() {
@@ -757,197 +824,240 @@
             document.getElementById('edit-total-amount-due').textContent = '₹' + totalAmountDue.toFixed(2);
         }
 
+
         document.getElementById('add-edit-product-row-btn').addEventListener('click', addEditProductRow);
         document.getElementById('edit-overall-price-per-kg').addEventListener('input', updateEditTotals);
 
-        function openEditModal(saleId) {
-            const sales = getSales();
-            const saleToEdit = sales.find(sale => sale.id === saleId);
+        async function openEditModal(saleId) {
+            try {
+                const docRef = salesCollection.doc(saleId);
+                const docSnap = await docRef.get();
 
-            if (!saleToEdit) {
-                showFlashMessage('Sale not found for editing.', 'error');
-                return;
+                if (!docSnap.exists) {
+                    showFlashMessage('Sale not found for editing.', 'error');
+                    return;
+                }
+                const saleToEdit = { id: docSnap.id, ...docSnap.data() };
+
+                document.getElementById('edit-sale-id').value = saleToEdit.id;
+                document.getElementById('edit-sale-date').value = saleToEdit.date;
+                document.getElementById('edit-merchant-name').value = saleToEdit.merchantName;
+                document.getElementById('edit-overall-price-per-kg').value = saleToEdit.overallPricePerKg.toFixed(2);
+
+                loadEditProductRows(saleToEdit.products || []); // Load existing products
+                document.getElementById('edit-sale-modal').classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Error opening edit modal: ", error);
+                showFlashMessage('Error loading sale for edit. Please try again.', 'error');
             }
-
-            document.getElementById('edit-sale-id').value = saleToEdit.id;
-            document.getElementById('edit-sale-date').value = saleToEdit.date;
-            document.getElementById('edit-merchant-name').value = saleToEdit.merchantName;
-            document.getElementById('edit-overall-price-per-kg').value = saleToEdit.overallPricePerKg.toFixed(2);
-
-            loadEditProductRows(saleToEdit.products || []); // Load existing products
-            document.getElementById('edit-sale-modal').classList.remove('hidden');
         }
 
         document.getElementById('cancel-edit-sale-btn').addEventListener('click', () => {
             document.getElementById('edit-sale-modal').classList.add('hidden');
         });
 
-        document.getElementById('edit-sale-form').addEventListener('submit', (event) => {
+        document.getElementById('edit-sale-form').addEventListener('submit', async (event) => {
             event.preventDefault();
 
-            const sales = getSales();
-            const saleId = document.getElementById('edit-sale-id').value;
-            const saleIndex = sales.findIndex(sale => sale.id === saleId);
+            try {
+                const saleId = document.getElementById('edit-sale-id').value;
+                const updatedDate = document.getElementById('edit-sale-date').value;
+                const updatedMerchant = document.getElementById('edit-merchant-name').value;
+                const updatedOverallPricePerKg = parseFloat(document.getElementById('edit-overall-price-per-kg').value);
 
-            if (saleIndex === -1) {
-                showFlashMessage('Error: Sale not found for update.', 'error');
-                return;
-            }
+                const productRows = document.querySelectorAll('#edit-products-container .product-row');
+                const updatedProducts = [];
+                let updatedTotalWeightKg = 0;
+                let updatedTotalQuantity = 0;
 
-            const updatedDate = document.getElementById('edit-sale-date').value;
-            const updatedMerchant = document.getElementById('edit-merchant-name').value;
-            const updatedOverallPricePerKg = parseFloat(document.getElementById('edit-overall-price-per-kg').value);
-
-            const productRows = document.querySelectorAll('#edit-products-container .product-row');
-            const updatedProducts = [];
-            let updatedTotalWeightKg = 0;
-            let updatedTotalQuantity = 0;
-
-            let isValid = true;
-            if (productRows.length === 0) {
-                showFlashMessage('Please add at least one banana product for editing.', 'error');
-                isValid = false;
-            }
-
-            productRows.forEach(row => {
-                const bananaType = row.querySelector('select[name="banana_type[]"]').value;
-                const weightKg = parseFloat(row.querySelector('input[name="weight_kg[]"]').value);
-                const quantity = parseInt(row.querySelector('input[name="quantity[]"]').value);
-
-                if (!bananaType || isNaN(weightKg) || weightKg <= 0 || isNaN(quantity) || quantity <= 0) {
-                    showFlashMessage('Please fill all product fields with valid positive numbers for each entry during editing.', 'error');
+                let isValid = true;
+                if (productRows.length === 0) {
+                    showFlashMessage('Please add at least one banana product for editing.', 'error');
                     isValid = false;
                 }
-                updatedProducts.push({ bananaType, weightKg, quantity });
-                updatedTotalWeightKg += weightKg;
-                updatedTotalQuantity += quantity;
-            });
 
-            if (!isValid) return;
+                productRows.forEach(row => {
+                    const bananaType = row.querySelector('select[name="banana_type[]"]').value;
+                    const weightInput = row.querySelector('input[name="weight_kg[]"]');
+                    const quantityInput = row.querySelector('input[name="quantity[]"]');
 
-            if (isNaN(updatedOverallPricePerKg) || updatedOverallPricePerKg <= 0) {
-                showFlashMessage('Please enter a valid positive Overall Price per kg for editing.', 'error');
-                return;
+                    const weight = parseFloat(weightInput.value);
+                    const quantity = parseInt(quantityInput.value);
+
+                    if (!bananaType || isNaN(weight) || weight <= 0 || isNaN(quantity) || quantity <= 0) {
+                        showFlashMessage('Please fill all product fields with valid positive numbers for each entry during editing.', 'error');
+                        isValid = false;
+                    }
+                    updatedProducts.push({ bananaType, weightKg: weight, quantity: quantity });
+                    updatedTotalWeightKg += weight;
+                    updatedTotalQuantity += quantity;
+                });
+
+                if (!isValid) return;
+
+                if (isNaN(updatedOverallPricePerKg) || updatedOverallPricePerKg <= 0) {
+                    showFlashMessage('Please enter a valid positive Overall Price per kg for editing.', 'error');
+                    return;
+                }
+
+                const updatedTotalAmount = updatedTotalWeightKg * updatedOverallPricePerKg;
+
+                // Fetch current sale to preserve amountReceived
+                const currentSaleDoc = await salesCollection.doc(saleId).get();
+                if (!currentSaleDoc.exists) {
+                     showFlashMessage('Error: Sale not found for update.', 'error');
+                     return;
+                }
+                const currentSaleData = currentSaleDoc.data();
+                const currentAmountReceived = currentSaleData.amountReceived || 0;
+
+
+                let updatedBalanceDue = updatedTotalAmount - currentAmountReceived;
+                if (updatedBalanceDue < 0) {
+                    updatedBalanceDue = 0; // Ensure balance doesn't go negative
+                }
+
+                const updateData = {
+                    date: updatedDate,
+                    merchantName: updatedMerchant,
+                    products: updatedProducts,
+                    totalWeightKg: updatedTotalWeightKg,
+                    totalQuantity: updatedTotalQuantity,
+                    overallPricePerKg: updatedOverallPricePerKg,
+                    totalAmount: updatedTotalAmount,
+                    balanceDue: updatedBalanceDue
+                };
+
+                await salesCollection.doc(saleId).update(updateData);
+                showFlashMessage('Sale updated successfully!', 'success');
+
+                document.getElementById('edit-sale-modal').classList.add('hidden');
+                renderSalesList(); // Re-render list with new data
+
+            } catch (error) {
+                console.error("Error updating sale: ", error);
+                showFlashMessage('Error updating sale. Please try again.', 'error');
             }
-
-            const updatedTotalAmount = updatedTotalWeightKg * updatedOverallPricePerKg;
-            const currentAmountReceived = sales[saleIndex].amountReceived;
-            const updatedBalanceDue = updatedTotalAmount - currentAmountReceived;
-
-            sales[saleIndex] = {
-                ...sales[saleIndex], // Keep existing properties like amountReceived, billNumber
-                date: updatedDate,
-                merchantName: updatedMerchant,
-                products: updatedProducts,
-                totalWeightKg: updatedTotalWeightKg,
-                totalQuantity: updatedTotalQuantity,
-                overallPricePerKg: updatedOverallPricePerKg,
-                totalAmount: updatedTotalAmount,
-                balanceDue: updatedBalanceDue < 0 ? 0 : updatedBalanceDue // Ensure balance doesn't go negative
-            };
-
-            saveSales(sales);
-            renderSalesList();
-            document.getElementById('edit-sale-modal').classList.add('hidden');
-            showFlashMessage('Sale updated successfully!', 'success');
         });
 
         // --- Payment Modal Logic ---
-        function openPaymentModal(saleId) {
-            const sales = getSales();
-            const saleToPay = sales.find(sale => sale.id === saleId);
+        async function openPaymentModal(saleId) {
+            try {
+                const docRef = salesCollection.doc(saleId);
+                const docSnap = await docRef.get();
 
-            if (!saleToPay) {
-                showFlashMessage('Sale not found for payment.', 'error');
-                return;
+                if (!docSnap.exists) {
+                    showFlashMessage('Sale not found for payment.', 'error');
+                    return;
+                }
+                const saleToPay = { id: docSnap.id, ...docSnap.data() };
+
+                document.getElementById('payment-sale-id').value = saleToPay.id;
+                document.getElementById('payment-bill-number').textContent = saleToPay.billNumber;
+                document.getElementById('payment-merchant-name').textContent = saleToPay.merchantName;
+                document.getElementById('payment-total-amount').textContent = saleToPay.totalAmount.toFixed(2);
+                document.getElementById('payment-balance-due').textContent = saleToPay.balanceDue.toFixed(2);
+                document.getElementById('payment-amount-input').value = saleToPay.balanceDue.toFixed(2); // Pre-fill
+
+                document.getElementById('payment-modal').classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Error opening payment modal: ", error);
+                showFlashMessage('Error loading sale for payment. Please try again.', 'error');
             }
-
-            document.getElementById('payment-sale-id').value = saleToPay.id;
-            document.getElementById('payment-bill-number').textContent = saleToPay.billNumber;
-            document.getElementById('payment-merchant-name').textContent = saleToPay.merchantName;
-            document.getElementById('payment-total-amount').textContent = saleToPay.totalAmount.toFixed(2);
-            document.getElementById('payment-balance-due').textContent = saleToPay.balanceDue.toFixed(2);
-            document.getElementById('payment-amount-input').value = saleToPay.balanceDue.toFixed(2); // Pre-fill
-
-            document.getElementById('payment-modal').classList.remove('hidden');
         }
 
         document.getElementById('cancel-payment-btn').addEventListener('click', () => {
             document.getElementById('payment-modal').classList.add('hidden');
         });
 
-        document.getElementById('payment-form').addEventListener('submit', (event) => {
+        document.getElementById('payment-form').addEventListener('submit', async (event) => {
             event.preventDefault();
 
-            const sales = getSales();
-            const saleId = document.getElementById('payment-sale-id').value;
-            const saleIndex = sales.findIndex(sale => sale.id === saleId);
+            try {
+                const saleId = document.getElementById('payment-sale-id').value;
+                const paymentAmount = parseFloat(document.getElementById('payment-amount-input').value);
 
-            if (saleIndex === -1) {
-                showFlashMessage('Error: Sale not found for payment update.', 'error');
-                return;
+                if (isNaN(paymentAmount) || paymentAmount <= 0) {
+                    showFlashMessage('Please enter a valid positive payment amount.', 'error');
+                    return;
+                }
+
+                const docRef = salesCollection.doc(saleId);
+                const docSnap = await docRef.get();
+                if (!docSnap.exists) {
+                    showFlashMessage('Error: Sale not found for payment update.', 'error');
+                    return;
+                }
+                const currentSaleData = docSnap.data();
+
+                let newAmountReceived = (currentSaleData.amountReceived || 0) + paymentAmount;
+                let newBalanceDue = currentSaleData.totalAmount - newAmountReceived;
+                if (newBalanceDue < 0) {
+                    newBalanceDue = 0; // Cap balance at 0
+                }
+
+                await docRef.update({
+                    amountReceived: newAmountReceived,
+                    balanceDue: newBalanceDue
+                });
+
+                showFlashMessage('Payment recorded successfully!', 'success');
+                document.getElementById('payment-modal').classList.add('hidden');
+                renderSalesList(); // Re-render list with new data
+
+            } catch (error) {
+                console.error("Error updating payment: ", error);
+                showFlashMessage('Error updating payment. Please try again.', 'error');
             }
-
-            const paymentAmount = parseFloat(document.getElementById('payment-amount-input').value);
-
-            if (isNaN(paymentAmount) || paymentAmount <= 0) {
-                showFlashMessage('Please enter a valid positive payment amount.', 'error');
-                return;
-            }
-
-            let newAmountReceived = sales[saleIndex].amountReceived + paymentAmount;
-            let newBalanceDue = sales[saleIndex].totalAmount - newAmountReceived;
-            if (newBalanceDue < 0) {
-                newBalanceDue = 0; // Cap balance at 0
-            }
-
-            sales[saleIndex].amountReceived = newAmountReceived;
-            sales[saleIndex].balanceDue = newBalanceDue;
-
-            saveSales(sales);
-            renderSalesList();
-            document.getElementById('payment-modal').classList.add('hidden');
-            showFlashMessage('Payment recorded successfully!', 'success');
         });
 
         // --- Bill View Modal Logic ---
-        function openBillModal(saleId) {
-            const sales = getSales();
-            const saleToView = sales.find(sale => sale.id === saleId);
+        async function openBillModal(saleId) {
+            try {
+                const docRef = salesCollection.doc(saleId);
+                const docSnap = await docRef.get();
 
-            if (!saleToView) {
-                showFlashMessage('Sale not found for bill view.', 'error');
-                return;
+                if (!docSnap.exists) {
+                    showFlashMessage('Sale not found for bill view.', 'error');
+                    return;
+                }
+                const saleToView = { id: docSnap.id, ...docSnap.data() };
+
+                document.getElementById('bill-bill-number').textContent = saleToView.billNumber;
+                document.getElementById('bill-date').textContent = saleToView.date;
+                document.getElementById('bill-merchant-name').textContent = saleToView.merchantName;
+
+                const productsTbody = document.getElementById('bill-products-tbody');
+                productsTbody.innerHTML = ''; // Clear previous products
+
+                saleToView.products.forEach(product => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">${product.bananaType}</td>
+                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">${product.weightKg.toFixed(2)}</td>
+                        <td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">${product.quantity}</td>
+                        <td class="border border-gray-300 px-4 py-2 text-right text-sm text-gray-800">
+                            ${(product.weightKg * saleToView.overallPricePerKg).toFixed(2)}
+                        </td>
+                    `;
+                    productsTbody.appendChild(row);
+                });
+
+                document.getElementById('bill-total-weight').textContent = saleToView.totalWeightKg.toFixed(2);
+                document.getElementById('bill-total-quantity').textContent = saleToView.totalQuantity;
+                document.getElementById('bill-overall-price-per-kg').textContent = saleToView.overallPricePerKg.toFixed(2);
+                document.getElementById('bill-total-amount').textContent = saleToView.totalAmount.toFixed(2);
+                document.getElementById('bill-amount-received').textContent = saleToView.amountReceived.toFixed(2);
+                document.getElementById('bill-balance-due').textContent = saleToView.balanceDue.toFixed(2);
+
+                document.getElementById('bill-view-modal').classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Error opening bill modal: ", error);
+                showFlashMessage('Error loading bill data. Please try again.', 'error');
             }
-
-            document.getElementById('bill-bill-number').textContent = saleToView.billNumber;
-            document.getElementById('bill-date').textContent = saleToView.date;
-            document.getElementById('bill-merchant-name').textContent = saleToView.merchantName;
-
-            const productsTbody = document.getElementById('bill-products-tbody');
-            productsTbody.innerHTML = ''; // Clear previous products
-
-            saleToView.products.forEach(product => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">${product.bananaType}</td>
-                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">${product.weightKg.toFixed(2)}</td>
-                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">${product.quantity}</td>
-                    <td class="border border-gray-300 px-4 py-2 text-right text-sm text-gray-800">
-                        ${(product.weightKg * saleToView.overallPricePerKg).toFixed(2)}
-                    </td>
-                `;
-                productsTbody.appendChild(row);
-            });
-
-            document.getElementById('bill-total-weight').textContent = saleToView.totalWeightKg.toFixed(2);
-            document.getElementById('bill-total-quantity').textContent = saleToView.totalQuantity;
-            document.getElementById('bill-overall-price-per-kg').textContent = saleToView.overallPricePerKg.toFixed(2);
-            document.getElementById('bill-total-amount').textContent = saleToView.totalAmount.toFixed(2);
-            document.getElementById('bill-amount-received').textContent = saleToView.amountReceived.toFixed(2);
-            document.getElementById('bill-balance-due').textContent = saleToView.balanceDue.toFixed(2);
-
-            document.getElementById('bill-view-modal').classList.remove('hidden');
         }
 
         document.getElementById('close-bill-btn').addEventListener('click', () => {
@@ -968,13 +1078,17 @@
 
             if (actionType === 'delete') {
                 confirmMessageElement.textContent = "Are you sure you want to delete this sale record? This action cannot be undone.";
-                currentConfirmAction = () => {
-                    const sales = getSales();
-                    const updatedSales = sales.filter(sale => sale.id !== saleId);
-                    saveSales(updatedSales);
-                    renderSalesList();
-                    showFlashMessage('Sale deleted successfully!', 'success');
-                    confirmModal.classList.add('hidden');
+                currentConfirmAction = async () => {
+                    try {
+                        await salesCollection.doc(saleId).delete();
+                        showFlashMessage('Sale deleted successfully!', 'success');
+                        confirmModal.classList.add('hidden');
+                        renderSalesList(); // Re-render list after deletion
+                    } catch (error) {
+                        console.error("Error deleting sale: ", error);
+                        showFlashMessage('Error deleting sale. Please try again.', 'error');
+                        confirmModal.classList.add('hidden');
+                    }
                 };
             }
             // Add other action types here if needed
@@ -995,10 +1109,15 @@
 
         // --- Initial Load ---
         document.addEventListener('DOMContentLoaded', () => {
-            renderSalesList();
-            // Add initial product row to the "Add New Sale" form when page loads
-            addInitialNewProductRow();
+            renderSalesList(); // Load sales from Firebase on page load
+            addInitialNewProductRow(); // For the 'Add New Sale' form
         });
+
+        } catch (initError) {
+            console.error("Firebase Initialization Error:", initError);
+            document.getElementById('sales-list-container').innerHTML = '<p class="text-red-600 text-center py-4">Error initializing Firebase. Please check your console for details and ensure your `firebaseConfig` is correct.</p>';
+            showFlashMessage('Application initialization failed. Check console for Firebase config errors.', 'error');
+        }
 
     </script>
 </body>
