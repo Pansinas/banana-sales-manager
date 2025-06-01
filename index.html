@@ -3,59 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ASPG Banana Sales Software</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
+    <title>ASPG Banana Sales Management</title>
+    <link href="https://cdn.tailwindcss.com" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 
     <style>
+        :root {
+            --primary: #38a169;
+            --primary-dark: #2f855a;
+            --secondary: #f6e05e;
+            --accent: #ecc94b;
+        }
+        
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            color: #374151;
+            background-color: #f7fafc;
+            color: #2d3748;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxkZWZzPjxwYXR0ZXJuIGlkPSJwYXR0ZXJuIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHBhdHRlcm5UcmFuc2Zvcm09InJvdGF0ZSg0NSkiPjxyZWN0IHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgZmlsbD0icmdiYSgyNDUsIDI0NSwgMjQ1LCAwLjEpIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI3BhdHRlcm4pIi8+PC9zdmc+');
         }
+        
+        .banana-bg {
+            background: linear-gradient(135deg, #f6e05e 0%, #fbd38d 100%);
+        }
+        
         .flash-message {
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            display: none; /* Hidden by default */
-        }
-        .flash-message.success {
-            background-color: #d1fae5; /* green-100 */
-            color: #065f46; /* green-800 */
-        }
-        .flash-message.error {
-            background-color: #fee2e2; /* red-100 */
-            color: #991b1b; /* red-800 */
-        }
-        /* Modal Overlay */
-        .modal-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000; /* Ensure modal is on top */
-        }
-        /* Modal Content */
-        .modal-content {
-            background-color: #fff;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
+            top: 1rem;
+            right: 1rem;
+            max-width: 400px;
+            z-index: 1000;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            max-width: 48rem; /* Equivalent to max-w-2xl or max-w-4xl for edit */
-            max-height: 90vh; /* Max height for scrollable content */
-            overflow-y: auto; /* Enable scrolling for long forms */
+            animation: slideIn 0.3s ease-out;
         }
-        /* Print-specific styles */
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+        
+        .product-card {
+            transition: all 0.2s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .loading-spinner {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         @media print {
             body * {
                 visibility: hidden;
@@ -68,8 +80,9 @@
                 left: 0;
                 top: 0;
                 width: 100%;
-                padding: 20px;
-                box-sizing: border-box;
+                padding: 0;
+                margin: 0;
+                background: white;
             }
             .no-print {
                 display: none !important;
@@ -78,1288 +91,1731 @@
     </style>
 </head>
 <body class="min-h-screen">
-    <div class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
-        <div id="flash-message-container" class="flash-message"></div>
+    <!-- Flash Message Container -->
+    <div id="flash-message-container" class="flash-message hidden"></div>
 
-        <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 lg:p-8 mb-8">
-            <h1 class="text-3xl sm:text-4xl font-bold text-center text-green-700 mb-6">ASPG Banana Sales Software</h1>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div class="bg-green-50 p-4 rounded-lg shadow-sm text-center">
-                    <h2 class="text-lg font-semibold text-green-800">Total Sales</h2>
-                    <p id="total-sales-amount" class="text-2xl font-bold text-green-600">₹0.00</p>
+    <!-- Main App Container -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header with Logo -->
+        <header class="flex flex-col sm:flex-row items-center justify-between mb-8">
+            <div class="flex items-center mb-4 sm:mb-0">
+                <div class="banana-bg rounded-full p-3 mr-4 shadow-md">
+                    <i class="fas fa-banana text-white text-2xl"></i>
                 </div>
-                <div class="bg-blue-50 p-4 rounded-lg shadow-sm text-center">
-                    <h2 class="text-lg font-semibold text-blue-800">Amount Received</h2>
-                    <p id="total-amount-received" class="text-2xl font-bold text-blue-600">₹0.00</p>
-                </div>
-                <div class="bg-yellow-50 p-4 rounded-lg shadow-sm text-center">
-                    <h2 class="text-lg font-semibold text-yellow-800">Outstanding Balance</h2>
-                    <p id="total-outstanding" class="text-2xl font-bold text-yellow-600">₹0.00</p>
-                </div>
+                <h1 class="text-3xl font-bold text-gray-800">
+                    <span class="text-green-600">ASPG</span> Banana Sales
+                </h1>
             </div>
-
-            <div class="text-center mb-6">
-                <button id="add-sale-btn" class="inline-block px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-150 ease-in-out">
-                    Add New Sale
+            <div class="flex items-center space-x-4">
+                <div class="hidden sm:block text-sm text-gray-600">
+                    <i class="fas fa-calendar-alt mr-1"></i>
+                    <span id="current-date"></span>
+                </div>
+                <button id="refresh-btn" class="px-3 py-2 bg-white rounded-lg shadow-sm text-gray-700 hover:bg-gray-50">
+                    <i class="fas fa-sync-alt"></i>
                 </button>
             </div>
+        </header>
 
-            <div class="p-6 bg-white rounded-lg shadow-md">
-                <h2 class="text-2xl font-semibold text-green-700 mb-4">All Sales Records</h2>
-                <div id="sales-list-container" class="overflow-x-auto">
-                    <p class="text-gray-600 text-center py-4">Loading sales data...</p>
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="px-6 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold">Total Sales</h3>
+                        <i class="fas fa-rupee-sign text-xl"></i>
+                    </div>
+                    <p id="total-sales-amount" class="text-3xl font-bold mt-2">₹0.00</p>
+                </div>
+                <div class="px-6 py-3 bg-gray-50 text-sm text-gray-600">
+                    <i class="fas fa-info-circle mr-1"></i> All time sales
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold">Amount Received</h3>
+                        <i class="fas fa-hand-holding-usd text-xl"></i>
+                    </div>
+                    <p id="total-amount-received" class="text-3xl font-bold mt-2">₹0.00</p>
+                </div>
+                <div class="px-6 py-3 bg-gray-50 text-sm text-gray-600">
+                    <i class="fas fa-info-circle mr-1"></i> Total payments received
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="px-6 py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold">Outstanding</h3>
+                        <i class="fas fa-exclamation-triangle text-xl"></i>
+                    </div>
+                    <p id="total-outstanding" class="text-3xl font-bold mt-2">₹0.00</p>
+                </div>
+                <div class="px-6 py-3 bg-gray-50 text-sm text-gray-600">
+                    <i class="fas fa-info-circle mr-1"></i> Pending payments
+                </div>
+            </div>
+        </div>
+
+        <!-- Sales Chart -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">Sales Overview</h2>
+                <div class="flex space-x-2">
+                    <button id="chart-week-btn" class="px-3 py-1 bg-green-100 text-green-700 rounded-md text-sm">Week</button>
+                    <button id="chart-month-btn" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm">Month</button>
+                    <button id="chart-year-btn" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-sm">Year</button>
+                </div>
+            </div>
+            <div class="h-64">
+                <canvas id="sales-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap justify-center gap-4 mb-8">
+            <button id="add-sale-btn" class="flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition-all">
+                <i class="fas fa-plus-circle mr-2"></i> New Sale
+            </button>
+            <button id="view-reports-btn" class="flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all">
+                <i class="fas fa-chart-bar mr-2"></i> Reports
+            </button>
+            <button id="manage-merchants-btn" class="flex items-center px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 transition-all">
+                <i class="fas fa-users mr-2"></i> Merchants
+            </button>
+        </div>
+
+        <!-- Sales Records -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2 sm:mb-0">Recent Sales</h2>
+                    <div class="relative">
+                        <input type="text" id="search-sales" placeholder="Search sales..." 
+                            class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        <div class="absolute left-3 top-2.5 text-gray-400">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bill No.</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Merchant</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net Weight</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total (₹)</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sales-table-body" class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">Loading sales data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                <div class="text-sm text-gray-500">
+                    Showing <span id="showing-from">1</span> to <span id="showing-to">10</span> of <span id="total-records">0</span> records
+                </div>
+                <div class="flex space-x-2">
+                    <button id="prev-page-btn" class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 disabled:opacity-50" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button id="next-page-btn" class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 disabled:opacity-50" disabled>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- All Modals -->
     <div id="modals-container">
-        <div id="add-sale-modal" class="modal-overlay hidden">
-            <div class="modal-content max-w-4xl">
-                <h2 class="text-2xl font-semibold text-green-700 mb-6 text-center">Add New Sale</h2>
-                <form id="add-sale-form" class="grid grid-cols-1 gap-4">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Add Sale Modal -->
+        <div id="add-sale-modal" class="modal-overlay fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+            <div class="modal-content bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-2xl font-semibold text-gray-800">New Banana Sale</h2>
+                    <button id="cancel-add-sale-btn" class="text-gray-400 hover:text-gray-500">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="add-sale-form" class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
-                            <label for="new-sale-date" class="block text-sm font-medium text-gray-700">Date</label>
-                            <input
-                                type="date"
-                                id="new-sale-date"
-                                class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                required
-                            />
+                            <label for="new-sale-date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                            <input type="date" id="new-sale-date" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
                         </div>
                         <div>
-                            <label for="new-merchant-name" class="block text-sm font-medium text-gray-700">Merchant Name</label>
-                            <input
-                                type="text"
-                                id="new-merchant-name"
-                                placeholder="e.g., Green Grocers"
-                                class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                required
-                            />
+                            <label for="new-merchant-name" class="block text-sm font-medium text-gray-700 mb-1">Merchant Name</label>
+                            <div class="relative">
+                                <input type="text" id="new-merchant-name" placeholder="Select or enter merchant" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                    <i class="fas fa-user text-gray-400"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div id="new-products-container" class="mt-4 border-t border-gray-200 pt-4 mb-6">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-3">Banana Products</h3>
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-lg font-medium text-gray-800">Banana Products</h3>
+                            <button type="button" id="add-new-product-row-btn" 
+                                class="flex items-center px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 text-sm">
+                                <i class="fas fa-plus-circle mr-1"></i> Add Product
+                            </button>
                         </div>
-                    <button type="button" id="add-new-product-row-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 text-sm mt-2">
-                        Add Another Product
-                    </button>
+                        <div id="new-products-container" class="space-y-4"></div>
+                    </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Gross Weight (kg)</label>
-                            <p id="new-total-weight" class="mt-1 block w-full p-2 bg-gray-200 rounded-md shadow-sm font-bold text-lg">
-                                0.00 kg
-                            </p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Gross Weight (kg)</label>
+                            <p id="new-total-weight" class="text-xl font-bold text-gray-800">0.00 kg</p>
                         </div>
                         <div>
-                            <label for="new-wastage-weight-kg" class="block text-sm font-medium text-gray-700">Wastage (Stem) (kg)</label>
-                            <input
-                                type="number"
-                                id="new-wastage-weight-kg"
-                                placeholder="e.g., 5"
-                                step="0.01"
-                                value="0"
-                                class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                oninput="updateNewTotals()"
-                            />
+                            <label for="new-wastage-weight-kg" class="block text-sm font-medium text-gray-700 mb-1">Wastage (Stem) (kg)</label>
+                            <input type="number" id="new-wastage-weight-kg" value="0" step="0.01" min="0"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                oninput="BananaSalesApp.updateNewTotals()">
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Net Billed Weight (kg)</label>
-                            <p id="new-net-billed-weight" class="mt-1 block w-full p-2 bg-gray-200 rounded-md shadow-sm font-bold text-lg text-blue-700">
-                                0.00 kg
-                            </p>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Net Billed Weight (kg)</label>
+                            <p id="new-net-billed-weight" class="text-xl font-bold text-blue-700">0.00 kg</p>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Total Quantity</label>
-                            <p id="new-total-quantity" class="mt-1 block w-full p-2 bg-gray-200 rounded-md shadow-sm font-bold text-lg">
-                                0
-                            </p>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Total Quantity</label>
+                            <p id="new-total-quantity" class="text-xl font-bold text-gray-800">0</p>
                         </div>
                         <div class="md:col-span-2">
-                            <label for="new-overall-price-per-kg" class="block text-sm font-medium text-gray-700">Overall Price per kg (₹)</label>
-                            <input
-                                type="number"
-                                id="new-overall-price-per-kg"
-                                placeholder="e.g., 25"
-                                step="0.01"
-                                class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                required
-                                oninput="updateNewTotals()"
-                            />
+                            <label for="new-overall-price-per-kg" class="block text-sm font-medium text-gray-700 mb-1">Overall Price per kg (₹)</label>
+                            <div class="relative">
+                                <input type="number" id="new-overall-price-per-kg" step="0.01" min="0" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    oninput="BananaSalesApp.updateNewTotals()">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                    <span class="text-gray-500">₹</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="col-span-full">
-                        <label class="block text-sm font-medium text-gray-700">Total Amount Due (₹)</label>
-                        <p id="new-total-amount-due" class="mt-1 block w-full p-2 bg-gray-200 rounded-md shadow-sm font-bold text-lg text-green-700">
-                            ₹0.00
-                        </p>
+                    <div class="bg-green-50 p-4 rounded-lg mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Total Amount Due</label>
+                        <p id="new-total-amount-due" class="text-2xl font-bold text-green-700">₹0.00</p>
                     </div>
 
-                    <div class="col-span-full flex justify-end mt-6 space-x-3">
-                        <button type="button" id="cancel-add-sale-btn" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2 transition duration-150 ease-in-out">
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" id="cancel-add-sale-btn-2" 
+                            class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
                             Cancel
                         </button>
-                        <button type="submit" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-150 ease-in-out">
-                            Add Sale
+                        <button type="submit" 
+                            class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700">
+                            <i class="fas fa-save mr-2"></i> Save Sale
                         </button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <div id="edit-sale-modal" class="modal-overlay hidden">
-            <div class="modal-content max-w-4xl">
-                <h2 class="text-2xl font-semibold text-green-700 mb-6 text-center">Edit Sale Record</h2>
-                <form id="edit-sale-form" class="grid grid-cols-1 gap-4">
+        <!-- Edit Sale Modal -->
+        <div id="edit-sale-modal" class="modal-overlay fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+            <div class="modal-content bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-2xl font-semibold text-gray-800">Edit Sale Record</h2>
+                    <button id="cancel-edit-sale-btn" class="text-gray-400 hover:text-gray-500">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="edit-sale-form" class="p-6">
                     <input type="hidden" id="edit-sale-id">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
-                            <label for="edit-sale-date" class="block text-sm font-medium text-gray-700">Date</label>
-                            <input
-                                type="date"
-                                id="edit-sale-date"
-                                class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                required
-                            />
+                            <label for="edit-sale-date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                            <input type="date" id="edit-sale-date" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
                         </div>
                         <div>
-                            <label for="edit-merchant-name" class="block text-sm font-medium text-gray-700">Merchant Name</label>
-                            <input
-                                type="text"
-                                id="edit-merchant-name"
-                                placeholder="e.g., Green Grocers"
-                                class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                required
-                            />
+                            <label for="edit-merchant-name" class="block text-sm font-medium text-gray-700 mb-1">Merchant Name</label>
+                            <div class="relative">
+                                <input type="text" id="edit-merchant-name" placeholder="Select or enter merchant" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                    <i class="fas fa-user text-gray-400"></i>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div id="edit-products-container" class="mt-4 border-t border-gray-200 pt-4 mb-6">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-3">Banana Products</h3>
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-lg font-medium text-gray-800">Banana Products</h3>
+                            <button type="button" id="add-edit-product-row-btn" 
+                                class="flex items-center px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 text-sm">
+                                <i class="fas fa-plus-circle mr-1"></i> Add Product
+                            </button>
                         </div>
-                    <button type="button" id="add-edit-product-row-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 text-sm mt-2">
-                        Add Another Product
-                    </button>
+                        <div id="edit-products-container" class="space-y-4"></div>
+                    </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Gross Weight (kg)</label>
-                            <p id="edit-total-weight" class="mt-1 block w-full p-2 bg-gray-200 rounded-md shadow-sm font-bold text-lg">
-                                0.00 kg
-                            </p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Gross Weight (kg)</label>
+                            <p id="edit-total-weight" class="text-xl font-bold text-gray-800">0.00 kg</p>
                         </div>
                         <div>
-                            <label for="edit-wastage-weight-kg" class="block text-sm font-medium text-gray-700">Wastage (Stem) (kg)</label>
-                            <input
-                                type="number"
-                                id="edit-wastage-weight-kg"
-                                placeholder="e.g., 5"
-                                step="0.01"
-                                value="0"
-                                class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                oninput="updateEditTotals()"
-                            />
+                            <label for="edit-wastage-weight-kg" class="block text-sm font-medium text-gray-700 mb-1">Wastage (Stem) (kg)</label>
+                            <input type="number" id="edit-wastage-weight-kg" value="0" step="0.01" min="0"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                oninput="BananaSalesApp.updateEditTotals()">
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Net Billed Weight (kg)</label>
-                            <p id="edit-net-billed-weight" class="mt-1 block w-full p-2 bg-gray-200 rounded-md shadow-sm font-bold text-lg text-blue-700">
-                                0.00 kg
-                            </p>
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Net Billed Weight (kg)</label>
+                            <p id="edit-net-billed-weight" class="text-xl font-bold text-blue-700">0.00 kg</p>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Total Quantity</label>
-                            <p id="edit-total-quantity" class="mt-1 block w-full p-2 bg-gray-200 rounded-md shadow-sm font-bold text-lg">
-                                0
-                            </p>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Total Quantity</label>
+                            <p id="edit-total-quantity" class="text-xl font-bold text-gray-800">0</p>
                         </div>
                         <div class="md:col-span-2">
-                            <label for="edit-overall-price-per-kg" class="block text-sm font-medium text-gray-700">Overall Price per kg (₹)</label>
-                            <input
-                                type="number"
-                                id="edit-overall-price-per-kg"
-                                placeholder="e.g., 25"
-                                step="0.01"
-                                class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                required
-                                oninput="updateEditTotals()"
-                            />
+                            <label for="edit-overall-price-per-kg" class="block text-sm font-medium text-gray-700 mb-1">Overall Price per kg (₹)</label>
+                            <div class="relative">
+                                <input type="number" id="edit-overall-price-per-kg" step="0.01" min="0" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    oninput="BananaSalesApp.updateEditTotals()">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                    <span class="text-gray-500">₹</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="col-span-full">
-                        <label class="block text-sm font-medium text-gray-700">New Total Amount Due (₹)</label>
-                        <p id="edit-total-amount-due" class="mt-1 block w-full p-2 bg-gray-200 rounded-md shadow-sm font-bold text-lg text-green-700">
-                            ₹0.00
-                        </p>
+                    <div class="bg-green-50 p-4 rounded-lg mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Total Amount Due</label>
+                        <p id="edit-total-amount-due" class="text-2xl font-bold text-green-700">₹0.00</p>
                     </div>
 
-                    <div class="col-span-full flex justify-end mt-6 space-x-3">
-                        <button type="button" id="cancel-edit-sale-btn" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2 transition duration-150 ease-in-out">
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" id="cancel-edit-sale-btn-2" 
+                            class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
                             Cancel
                         </button>
-                        <button type="submit" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-150 ease-in-out">
-                            Save Changes
+                        <button type="submit" 
+                            class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700">
+                            <i class="fas fa-save mr-2"></i> Save Changes
                         </button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <div id="payment-modal" class="modal-overlay hidden">
-            <div class="modal-content max-w-md">
-                <h2 class="text-xl font-semibold text-green-700 mb-4">Record Payment</h2>
-                <p class="mb-2 text-lg text-gray-700"><strong>Bill Number:</strong> <span id="payment-bill-number"></span></p>
-                <p class="mb-2 text-lg text-gray-700"><strong>Merchant:</strong> <span id="payment-merchant-name"></span></p>
-                <p class="mb-2 text-lg text-gray-700"><strong>Total Amount:</strong> ₹<span id="payment-total-amount"></span></p>
-                <p class="mb-4 text-lg text-gray-700"><strong>Current Balance Due:</strong> ₹<span id="payment-balance-due"></span></p>
-
-                <form id="payment-form">
+        <!-- Payment Modal -->
+        <div id="payment-modal" class="modal-overlay fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+            <div class="modal-content bg-white rounded-xl shadow-xl max-w-md w-full">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-xl font-semibold text-gray-800">Record Payment</h2>
+                    <button id="cancel-payment-btn" class="text-gray-400 hover:text-gray-500">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <form id="payment-form" class="p-6">
                     <input type="hidden" id="payment-sale-id">
-                    <div class="mb-6">
-                        <label for="payment-amount-input" class="block text-sm font-medium text-gray-700">Amount to Receive (₹)</label>
-                        <input
-                            type="number"
-                            id="payment-amount-input"
-                            step="0.01"
-                            class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                            required
-                        />
+                    <div class="space-y-4 mb-6">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Bill Number:</span>
+                            <span id="payment-bill-number" class="font-semibold"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Merchant:</span>
+                            <span id="payment-merchant-name" class="font-semibold"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Total Amount:</span>
+                            <span id="payment-total-amount" class="font-semibold"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Amount Received:</span>
+                            <span id="payment-amount-received" class="font-semibold text-blue-600"></span>
+                        </div>
+                        <div class="flex justify-between text-lg">
+                            <span class="text-gray-700">Balance Due:</span>
+                            <span id="payment-balance-due" class="font-bold text-red-600"></span>
+                        </div>
                     </div>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" id="cancel-payment-btn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+
+                    <div class="mb-6">
+                        <label for="payment-amount-input" class="block text-sm font-medium text-gray-700 mb-1">Amount to Receive (₹)</label>
+                        <div class="relative">
+                            <input type="number" id="payment-amount-input" step="0.01" min="0" required
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <span class="text-gray-500">₹</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" id="cancel-payment-btn-2" 
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
                             Cancel
                         </button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                            Update Payment
+                        <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700">
+                            <i class="fas fa-money-bill-wave mr-2"></i> Record Payment
                         </button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <div id="bill-view-modal" class="modal-overlay hidden">
-            <div class="modal-content max-w-2xl">
-                <div id="bill-content" class="p-4 border border-gray-300 rounded-md">
-                    <h2 class="text-2xl font-bold text-center text-green-800 mb-4">Banana Sales Bill</h2>
-                    <div class="mb-4 text-sm">
-                        <p><strong>Bill Number:</strong> <span id="bill-bill-number"></span></p>
-                        <p><strong>Date:</strong> <span id="bill-date"></span></p>
-                        <p><strong>Seller:</strong> ALPHONSE N</p>
-                        <p><strong>Address:</strong> Nagercoil Pampanvilai Anandanadarkudi Road</p>
-                        <p><strong>Contact:</strong> +91 9443391054</p>
-                    </div>
-                    <div class="mb-6">
-                        <p class="text-lg font-semibold mb-2">Bill To:</p>
-                        <p class="text-xl font-bold text-gray-800" id="bill-merchant-name"></p>
+        <!-- Bill View Modal -->
+        <div id="bill-view-modal" class="modal-overlay fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+            <div class="modal-content bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div id="bill-content" class="p-8">
+                    <div class="flex justify-between items-start mb-8">
+                        <div>
+                            <h1 class="text-3xl font-bold text-green-700">ASPG Banana Sales</h1>
+                            <p class="text-gray-600">Nagercoil Pampanvilai Anandanadarkudi Road</p>
+                            <p class="text-gray-600">+91 9443391054</p>
+                        </div>
+                        <div class="text-right">
+                            <h2 class="text-2xl font-bold text-gray-800">TAX INVOICE</h2>
+                            <p class="text-gray-600"><strong>Bill No:</strong> <span id="bill-bill-number" class="font-semibold"></span></p>
+                            <p class="text-gray-600"><strong>Date:</strong> <span id="bill-date" class="font-semibold"></span></p>
+                        </div>
                     </div>
 
-                    <table class="min-w-full mb-6 border-collapse border border-gray-300">
+                    <div class="flex justify-between mb-8">
+                        <div class="w-1/2">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Sold By:</h3>
+                            <p class="font-bold">ALPHONSE N</p>
+                            <p>ASPG Banana Farm</p>
+                            <p>Nagercoil Pampanvilai</p>
+                            <p>GSTIN: (if applicable)</p>
+                        </div>
+                        <div class="w-1/2">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Bill To:</h3>
+                            <p id="bill-merchant-name" class="font-bold"></p>
+                            <p id="bill-merchant-address">(Address not specified)</p>
+                            <p id="bill-merchant-contact">(Contact not specified)</p>
+                        </div>
+                    </div>
+
+                    <table class="w-full mb-8 border-collapse">
                         <thead>
-                            <tr class="bg-gray-100">
-                                <th class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">Description (Banana Type)</th>
-                                <th class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">Weight (kg)</th>
-                                <th class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">Quantity</th>
-                                <th class="border border-gray-300 px-4 py-2 text-right text-sm font-medium text-gray-700">Amount (₹)</th>
+                            <tr class="bg-green-100 text-left">
+                                <th class="p-3 border border-gray-300 font-semibold text-gray-700">Description</th>
+                                <th class="p-3 border border-gray-300 font-semibold text-gray-700">Weight (kg)</th>
+                                <th class="p-3 border border-gray-300 font-semibold text-gray-700">Quantity</th>
+                                <th class="p-3 border border-gray-300 font-semibold text-gray-700 text-right">Rate (₹/kg)</th>
+                                <th class="p-3 border border-gray-300 font-semibold text-gray-700 text-right">Amount (₹)</th>
                             </tr>
                         </thead>
                         <tbody id="bill-products-tbody">
-                            </tbody>
+                            <!-- Products will be inserted here -->
+                        </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Gross Weight:</td>
-                                <td class="border border-gray-300 px-4 py-2 text-right font-bold"><span id="bill-gross-weight"></span> kg</td>
+                                <td colspan="4" class="p-3 border border-gray-300 font-semibold text-right">Gross Weight:</td>
+                                <td class="p-3 border border-gray-300 font-bold text-right"><span id="bill-gross-weight"></span> kg</td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Wastage (Stem) Weight:</td>
-                                <td class="border border-gray-300 px-4 py-2 text-right font-bold text-red-600">
-                                    - <span id="bill-wastage-weight"></span> kg
-                                </td>
+                                <td colspan="4" class="p-3 border border-gray-300 font-semibold text-right">Wastage (Stem):</td>
+                                <td class="p-3 border border-gray-300 font-bold text-right text-red-600">- <span id="bill-wastage-weight"></span> kg</td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Net Billed Weight:</td>
-                                <td class="border border-gray-300 px-4 py-2 text-right font-bold text-blue-700">
-                                    <span id="bill-net-billed-weight"></span> kg
-                                </td>
+                                <td colspan="4" class="p-3 border border-gray-300 font-semibold text-right">Net Billed Weight:</td>
+                                <td class="p-3 border border-gray-300 font-bold text-right text-blue-700"><span id="bill-net-billed-weight"></span> kg</td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Total Quantity:</td>
-                                <td class="border border-gray-300 px-4 py-2 text-right font-bold"><span id="bill-total-quantity"></span></td>
+                                <td colspan="4" class="p-3 border border-gray-300 font-semibold text-right">Total Quantity:</td>
+                                <td class="p-3 border border-gray-300 font-bold text-right"><span id="bill-total-quantity"></span></td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Overall Price/kg:</td>
-                                <td class="border border-gray-300 px-4 py-2 text-right font-bold">₹<span id="bill-overall-price-per-kg"></span></td>
+                                <td colspan="4" class="p-3 border border-gray-300 font-semibold text-right">Overall Price/kg:</td>
+                                <td class="p-3 border border-gray-300 font-bold text-right">₹<span id="bill-overall-price-per-kg"></span></td>
+                            </tr>
+                            <tr class="bg-gray-100">
+                                <td colspan="4" class="p-3 border border-gray-300 font-semibold text-right">Total Amount:</td>
+                                <td class="p-3 border border-gray-300 font-bold text-right text-green-700">₹<span id="bill-total-amount"></span></td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Total Amount:</td>
-                                <td class="border border-gray-300 px-4 py-2 text-right font-bold text-green-700">₹<span id="bill-total-amount"></span></td>
+                                <td colspan="4" class="p-3 border border-gray-300 font-semibold text-right">Amount Received:</td>
+                                <td class="p-3 border border-gray-300 font-bold text-right text-blue-600">₹<span id="bill-amount-received"></span></td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Amount Received:</td>
-                                <td class="border border-gray-300 px-4 py-2 text-right font-bold text-blue-700">₹<span id="bill-amount-received"></span></td>
-                            </tr>
-                            <tr>
-                                <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Balance Due:</td>
-                                <td class="border border-gray-300 px-4 py-2 text-right font-bold text-red-700">₹<span id="bill-balance-due"></span></td>
+                                <td colspan="4" class="p-3 border border-gray-300 font-semibold text-right">Balance Due:</td>
+                                <td class="p-3 border border-gray-300 font-bold text-right text-red-600">₹<span id="bill-balance-due"></span></td>
                             </tr>
                         </tfoot>
                     </table>
-                    <div class="text-sm mt-6 text-center">
-                        <p>Thank you for your business!</p>
-                        <p class="mt-4">_________________________</p>
-                        <p>Signature</p>
+
+                    <div class="mt-12 flex justify-between">
+                        <div class="w-1/3 text-center">
+                            <p class="border-t border-gray-400 pt-2">Customer Signature</p>
+                        </div>
+                        <div class="w-1/3 text-center">
+                            <p class="border-t border-gray-400 pt-2">Prepared By</p>
+                        </div>
+                        <div class="w-1/3 text-center">
+                            <p class="border-t border-gray-400 pt-2">Authorized Signature</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 text-center text-sm text-gray-500">
+                        <p>Thank you for your business! Please bring this invoice for any queries.</p>
+                        <p class="mt-2">E. & O.E.</p>
                     </div>
                 </div>
-                <div class="text-center mt-6 no-print">
-                    <button id="print-bill-btn" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition duration-150 ease-in-out">
-                        Print Bill
+                <div class="p-6 border-t border-gray-200 flex justify-center space-x-4 no-print">
+                    <button id="print-bill-btn" 
+                        class="flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700">
+                        <i class="fas fa-print mr-2"></i> Print Bill
                     </button>
-                    <button id="close-bill-btn" class="px-6 py-3 ml-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 focus:ring-offset-2 transition duration-150 ease-in-out">
-                        Close
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div id="confirm-modal" class="modal-overlay hidden">
-            <div class="modal-content max-w-sm">
-                <h2 class="text-xl font-semibold text-red-700 mb-4">Confirm Action</h2>
-                <p id="confirm-message" class="mb-6 text-gray-700"></p>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" id="cancel-confirm-btn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-                        Cancel
-                    </button>
-                    <button type="button" id="execute-confirm-btn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
-                        Confirm
+                    <button id="close-bill-btn" 
+                        class="flex items-center px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-times mr-2"></i> Close
                     </button>
                 </div>
             </div>
         </div>
 
+        <!-- Confirm Modal -->
+        <div id="confirm-modal" class="modal-overlay fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+            <div class="modal-content bg-white rounded-xl shadow-xl max-w-sm w-full">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                        <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
+                        <span id="confirm-title">Confirm Action</span>
+                    </h2>
+                </div>
+                <div class="p-6">
+                    <p id="confirm-message" class="mb-6 text-gray-700"></p>
+                    <div class="flex justify-end space-x-4">
+                        <button type="button" id="cancel-confirm-btn" 
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="button" id="execute-confirm-btn" 
+                            class="px-4 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700">
+                            Confirm
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <!-- Service Worker Registration -->
     <script>
-        // --- Global Firebase References (declared here, assigned after init) ---
-        // These need to be accessible by functions that are called by onclick/oninput handlers.
-        let db;
-        let salesCollection;
-        let billCounterDocRef; // Reference to the bill counter document
-
-        // --- GLOBAL UTILITIES AND CONSTANTS (Accessible throughout the script) ---
-        const bananaTypes = ["Red Banana", "Robusta", "Matti", "Athan"];
-
-        // Get the Canvas application ID from the global variable
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        console.log("App ID:", appId); // Debugging: Log the appId
-
-        // --- Firebase Configuration ---
-        // IMPORTANT: This should be parsed from __firebase_config provided by the Canvas environment.
-        // DO NOT hardcode your Firebase config here if __firebase_config is available.
-        let firebaseConfig;
-        if (typeof __firebase_config !== 'undefined') {
-            try {
-                firebaseConfig = JSON.parse(__firebase_config);
-                console.log("Firebase Config (parsed from __firebase_config):", firebaseConfig);
-            } catch (e) {
-                console.error("Error parsing __firebase_config:", e);
-                showFlashMessage('Error initializing Firebase: Invalid configuration provided by environment.', 'error');
-                // Set to null to prevent further errors if parsing fails
-                firebaseConfig = null;
-            }
-        } else {
-            // Fallback for local testing or if __firebase_config is truly not defined (unlikely in Canvas)
-            // User MUST replace these placeholders with their actual Firebase project configuration for local testing.
-            firebaseConfig = {
-              apiKey: "AIzaSyDNWaOPTn1GiT8zAWFfXxiYuA-depTisCc", // Placeholder: Replace with your actual API Key
-              authDomain: "my-banana-sales-app.firebaseapp.com", // Placeholder: Replace with your actual Auth Domain
-              projectId: "my-banana-sales-app", // Placeholder: Replace with your actual Project ID
-              storageBucket: "my-banana-sales-app.firebasestorage.app", // Placeholder: Replace with your actual Storage Bucket
-              messagingSenderId: "461621717926", // Placeholder: Replace with your actual Messaging Sender ID
-              appId: "1:461621717926:web:078f5f43bb35bcce93fd67", // Placeholder: Replace with your actual App ID
-              measurementId: "G-PTW713Z5VN" // Placeholder: Replace with your actual Measurement ID
-            };
-            console.warn("Using hardcoded Firebase Config. Ensure __firebase_config is available in Canvas environment.");
-            console.log("Firebase Config (hardcoded fallback):", firebaseConfig);
-        }
-
-
-        function showFlashMessage(message, type) {
-            const flashContainer = document.getElementById('flash-message-container');
-            flashContainer.textContent = message;
-            flashContainer.className = `flash-message ${type} block`;
-            setTimeout(() => {
-                flashContainer.className = `flash-message ${type} hidden`;
-            }, 5000); // Hide after 5 seconds
-        }
-
-        // --- Product Row HTML Generation (used by both Add/Edit modals) ---
-        function createProductRowHtml(index, bananaType = '', weightKg = '', quantity = '', isEdit = false) {
-            const idPrefix = isEdit ? 'edit-' : 'new-';
-            // Ensure oninput calls correct total update function
-            const onInputChange = isEdit ? 'updateEditTotals()' : 'updateNewTotals()';
-
-            const removeButtonHtml = `
-                <div class="flex justify-end sm:justify-start">
-                    <button type="button" onclick="${isEdit ? 'removeEditProductRow(this)' : 'removeNewProductRow(this)'}" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm">
-                        Remove
-                    </button>
-                </div>`;
-
-            return `
-                <div class="product-row grid grid-cols-1 sm:grid-cols-4 gap-3 mb-3 p-3 bg-gray-50 rounded-md shadow-sm items-end" id="product-row-${idPrefix}${index}">
-                    <div>
-                        <label for="${idPrefix}banana_type-${index}" class="block text-sm font-medium text-gray-700">Banana Type</label>
-                        <select
-                            id="${idPrefix}banana_type-${index}"
-                            name="banana_type[]"
-                            class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                            required
-                        >
-                            <option value="">Select Type</option>
-                            ${bananaTypes.map(type => `<option value="${type}" ${bananaType === type ? 'selected' : ''}>${type}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div>
-                        <label for="${idPrefix}weight_kg-${index}" class="block text-sm font-medium text-gray-700">Weight (kg)</label>
-                        <input
-                            type="number"
-                            id="${idPrefix}weight_kg-${index}"
-                            name="weight_kg[]"
-                            value="${weightKg}"
-                            placeholder="e.g., 100"
-                            step="0.01"
-                            class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                            required
-                            oninput="${onInputChange}"
-                        />
-                    </div>
-                    <div>
-                        <label for="${idPrefix}quantity-${index}" class="block text-sm font-medium text-gray-700">Quantity</label>
-                        <input
-                            type="number"
-                            id="${idPrefix}quantity-${index}"
-                            name="quantity[]"
-                            value="${quantity}"
-                            placeholder="e.g., 50"
-                            step="1"
-                            class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                            required
-                            oninput="${onInputChange}"
-                        />
-                    </div>
-                    ${removeButtonHtml}
-                </div>
-            `;
-        }
-
-        // Function to update visibility of remove buttons based on row count
-        function updateRemoveButtons(formType) {
-            const containerId = formType === 'new' ? 'new-products-container' : 'edit-products-container';
-            const container = document.getElementById(containerId);
-            const productRows = container.querySelectorAll('.product-row');
-
-            productRows.forEach(row => {
-                const removeButtonDiv = row.querySelector('.flex.justify-end.sm\\:justify-start');
-                if (removeButtonDiv) {
-                    const removeButton = removeButtonDiv.querySelector('button');
-                    if (removeButton) {
-                        if (productRows.length <= 1) {
-                            removeButton.style.display = 'none'; // Hide if only one row
-                        } else {
-                            removeButton.style.display = 'inline-block'; // Show if more than one row
-                        }
-                    }
-                }
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then(registration => {
+                    console.log('ServiceWorker registration successful');
+                }).catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
             });
         }
+    </script>
 
-        // --- New Sale Form Specific Functions (must be global for inline calls) ---
-        let newProductRowCounter = 0; // Reset counter for new form
-        function addInitialNewProductRow() {
-            const container = document.getElementById('new-products-container');
-            container.innerHTML = createProductRowHtml(0, '', '', '', false);
-            newProductRowCounter = 1;
-            document.getElementById('new-wastage-weight-kg').value = '0'; // Reset wastage
-            document.getElementById('new-overall-price-per-kg').value = ''; // Clear overall price
-            updateNewTotals();
-            updateRemoveButtons('new');
-        }
-        function addNewProductRow() {
-            const container = document.getElementById('new-products-container');
-            container.insertAdjacentHTML('beforeend', createProductRowHtml(newProductRowCounter, '', '', '', false));
-            newProductRowCounter++;
-            updateNewTotals();
-            updateRemoveButtons('new');
-        }
-        function removeNewProductRow(button) {
-            const container = document.getElementById('new-products-container');
-            if (container.childElementCount > 1) {
-                const row = button.closest('.product-row');
-                row.remove();
+    <!-- Main Application Script -->
+    <script>
+        // Banana Sales Application Namespace
+        const BananaSalesApp = (function() {
+            // Constants
+            const BANANA_TYPES = ["Red Banana", "Robusta", "Matti", "Athan", "Nendran", "Poovan", "Palayankodan"];
+            const PAGE_SIZE = 10;
+            
+            // Firebase References
+            let db;
+            let salesCollection;
+            let billCounterDocRef;
+            let merchantsCollection;
+            
+            // State
+            let currentPage = 1;
+            let totalRecords = 0;
+            let currentChartRange = 'month';
+            let salesChart;
+            
+            // Initialize the application
+            function init() {
+                setupFirebase();
+                setupUI();
+                setupEventListeners();
+                renderSalesList();
+                updateCurrentDate();
+            }
+            
+            // Firebase Setup
+            function setupFirebase() {
+                try {
+                    // Get config from environment (should be set by your deployment platform)
+                    const firebaseConfig = JSON.parse(window.__firebase_config || '{}');
+                    
+                    if (!firebaseConfig.apiKey) {
+                        throw new Error("Firebase configuration is invalid or missing");
+                    }
+                    
+                    firebase.initializeApp(firebaseConfig);
+                    db = firebase.firestore();
+                    
+                    // Initialize collections with proper security path
+                    const appId = window.__app_id || 'default-app-id';
+                    const basePath = `artifacts/${appId}/public/data`;
+                    
+                    salesCollection = db.collection(`${basePath}/sales`);
+                    merchantsCollection = db.collection(`${basePath}/merchants`);
+                    billCounterDocRef = db.collection(`${basePath}/metadata`).doc('billCounter');
+                    
+                    console.log("Firebase initialized successfully");
+                } catch (error) {
+                    console.error("Firebase initialization failed:", error);
+                    showFlashMessage("Application initialization failed. Please check console for details.", "error");
+                }
+            }
+            
+            // UI Setup
+            function setupUI() {
+                // Initialize date pickers with today's date
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('new-sale-date').value = today;
+                document.getElementById('edit-sale-date').value = today;
+                
+                // Initialize chart
+                initSalesChart();
+                
+                // Add first product row to add sale form
+                addInitialNewProductRow();
+            }
+            
+            // Initialize sales chart
+            function initSalesChart() {
+                const ctx = document.getElementById('sales-chart').getContext('2d');
+                salesChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Sales Amount (₹)',
+                            backgroundColor: '#38a169',
+                            borderColor: '#2f855a',
+                            borderWidth: 1,
+                            data: []
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '₹' + value;
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Sales: ₹' + context.raw.toFixed(2);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Update chart data based on selected range
+            async function updateChartData(range) {
+                try {
+                    let labels = [];
+                    let data = [];
+                    const now = new Date();
+                    const startDate = new Date();
+                    
+                    // Set start date based on range
+                    if (range === 'week') {
+                        startDate.setDate(now.getDate() - 7);
+                    } else if (range === 'month') {
+                        startDate.setMonth(now.getMonth() - 1);
+                    } else { // year
+                        startDate.setFullYear(now.getFullYear() - 1);
+                    }
+                    
+                    // Format dates for query
+                    const startDateStr = startDate.toISOString().split('T')[0];
+                    const endDateStr = now.toISOString().split('T')[0];
+                    
+                    // Query sales data
+                    const snapshot = await salesCollection
+                        .where('date', '>=', startDateStr)
+                        .where('date', '<=', endDateStr)
+                        .orderBy('date')
+                        .get();
+                    
+                    // Group data by time period
+                    const salesByPeriod = {};
+                    
+                    snapshot.forEach(doc => {
+                        const sale = doc.data();
+                        const saleDate = new Date(sale.date);
+                        let periodKey;
+                        
+                        if (range === 'week') {
+                            periodKey = saleDate.toLocaleDateString('en-US', { weekday: 'short' });
+                        } else if (range === 'month') {
+                            periodKey = saleDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+                        } else { // year
+                            periodKey = saleDate.toLocaleDateString('en-US', { month: 'short' });
+                        }
+                        
+                        if (!salesByPeriod[periodKey]) {
+                            salesByPeriod[periodKey] = 0;
+                        }
+                        salesByPeriod[periodKey] += sale.totalAmount;
+                    });
+                    
+                    // Prepare data for chart
+                    labels = Object.keys(salesByPeriod);
+                    data = Object.values(salesByPeriod);
+                    
+                    // Update chart
+                    salesChart.data.labels = labels;
+                    salesChart.data.datasets[0].data = data;
+                    salesChart.update();
+                    
+                    // Update active button
+                    document.querySelectorAll('#chart-week-btn, #chart-month-btn, #chart-year-btn').forEach(btn => {
+                        btn.classList.remove('bg-green-100', 'text-green-700');
+                        btn.classList.add('bg-gray-100', 'text-gray-700');
+                    });
+                    
+                    document.getElementById(`chart-${range}-btn`).classList.remove('bg-gray-100', 'text-gray-700');
+                    document.getElementById(`chart-${range}-btn`).classList.add('bg-green-100', 'text-green-700');
+                    
+                } catch (error) {
+                    console.error("Error updating chart:", error);
+                }
+            }
+            
+            // Event Listeners
+            function setupEventListeners() {
+                // Add Sale Modal
+                document.getElementById('add-sale-btn').addEventListener('click', openAddSaleModal);
+                document.getElementById('add-new-product-row-btn').addEventListener('click', addNewProductRow);
+                document.getElementById('cancel-add-sale-btn').addEventListener('click', closeAddSaleModal);
+                document.getElementById('cancel-add-sale-btn-2').addEventListener('click', closeAddSaleModal);
+                document.getElementById('add-sale-form').addEventListener('submit', handleAddSaleSubmit);
+                
+                // Edit Sale Modal
+                document.getElementById('add-edit-product-row-btn').addEventListener('click', addEditProductRow);
+                document.getElementById('cancel-edit-sale-btn').addEventListener('click', closeEditSaleModal);
+                document.getElementById('cancel-edit-sale-btn-2').addEventListener('click', closeEditSaleModal);
+                document.getElementById('edit-sale-form').addEventListener('submit', handleEditSaleSubmit);
+                
+                // Payment Modal
+                document.getElementById('cancel-payment-btn').addEventListener('click', closePaymentModal);
+                document.getElementById('cancel-payment-btn-2').addEventListener('click', closePaymentModal);
+                document.getElementById('payment-form').addEventListener('submit', handlePaymentSubmit);
+                
+                // Bill View Modal
+                document.getElementById('close-bill-btn').addEventListener('click', closeBillModal);
+                document.getElementById('print-bill-btn').addEventListener('click', printBill);
+                
+                // Confirm Modal
+                document.getElementById('cancel-confirm-btn').addEventListener('click', closeConfirmModal);
+                document.getElementById('execute-confirm-btn').addEventListener('click', executeConfirmAction);
+                
+                // Chart Range Buttons
+                document.getElementById('chart-week-btn').addEventListener('click', () => updateChartData('week'));
+                document.getElementById('chart-month-btn').addEventListener('click', () => updateChartData('month'));
+                document.getElementById('chart-year-btn').addEventListener('click', () => updateChartData('year'));
+                
+                // Pagination
+                document.getElementById('prev-page-btn').addEventListener('click', goToPrevPage);
+                document.getElementById('next-page-btn').addEventListener('click', goToNextPage);
+                
+                // Search
+                document.getElementById('search-sales').addEventListener('input', debounce(handleSearch, 300));
+                
+                // Refresh
+                document.getElementById('refresh-btn').addEventListener('click', refreshData);
+                
+                // Merchant name autocomplete
+                setupMerchantAutocomplete();
+            }
+            
+            // Setup merchant name autocomplete
+            function setupMerchantAutocomplete() {
+                const merchantInputs = [
+                    document.getElementById('new-merchant-name'),
+                    document.getElementById('edit-merchant-name')
+                ];
+                
+                merchantInputs.forEach(input => {
+                    input.addEventListener('input', async function() {
+                        const searchTerm = this.value.trim();
+                        if (searchTerm.length < 2) return;
+                        
+                        try {
+                            const snapshot = await merchantsCollection
+                                .where('name', '>=', searchTerm)
+                                .where('name', '<=', searchTerm + '\uf8ff')
+                                .limit(5)
+                                .get();
+                            
+                            // Create or update datalist
+                            let datalist = this.list;
+                            if (!datalist) {
+                                datalist = document.createElement('datalist');
+                                datalist.id = `${this.id}-list`;
+                                this.setAttribute('list', datalist.id);
+                                document.body.appendChild(datalist);
+                            }
+                            
+                            // Clear previous options
+                            datalist.innerHTML = '';
+                            
+                            // Add new options
+                            snapshot.forEach(doc => {
+                                const merchant = doc.data();
+                                const option = document.createElement('option');
+                                option.value = merchant.name;
+                                if (merchant.address) {
+                                    option.setAttribute('data-address', merchant.address);
+                                }
+                                if (merchant.contact) {
+                                    option.setAttribute('data-contact', merchant.contact);
+                                }
+                                datalist.appendChild(option);
+                            });
+                            
+                        } catch (error) {
+                            console.error("Error fetching merchants:", error);
+                        }
+                    });
+                    
+                    // When a merchant is selected from the dropdown
+                    input.addEventListener('change', function() {
+                        const selectedOption = document.querySelector(`#${this.list.id} option[value="${this.value}"]`);
+                        if (selectedOption) {
+                            const billModal = document.getElementById('bill-view-modal');
+                            if (billModal && !billModal.classList.contains('hidden')) {
+                                document.getElementById('bill-merchant-address').textContent = 
+                                    selectedOption.getAttribute('data-address') || '(Address not specified)';
+                                document.getElementById('bill-merchant-contact').textContent = 
+                                    selectedOption.getAttribute('data-contact') || '(Contact not specified)';
+                            }
+                        }
+                    });
+                });
+            }
+            
+            // Debounce function for search
+            function debounce(func, wait) {
+                let timeout;
+                return function() {
+                    const context = this, args = arguments;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => {
+                        func.apply(context, args);
+                    }, wait);
+                };
+            }
+            
+            // Update current date display
+            function updateCurrentDate() {
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                const today = new Date().toLocaleDateString('en-US', options);
+                document.getElementById('current-date').textContent = today;
+            }
+            
+            // Show flash message
+            function showFlashMessage(message, type) {
+                const flashContainer = document.getElementById('flash-message-container');
+                flashContainer.textContent = message;
+                flashContainer.className = `flash-message ${type === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'} p-4 rounded-lg shadow-md`;
+                flashContainer.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    flashContainer.classList.add('hidden');
+                }, 5000);
+            }
+            
+            // Product Row Functions
+            function createProductRowHtml(index, bananaType = '', weightKg = '', quantity = '', isEdit = false) {
+                const idPrefix = isEdit ? 'edit-' : 'new-';
+                const onInputChange = isEdit ? 'BananaSalesApp.updateEditTotals()' : 'BananaSalesApp.updateNewTotals()';
+                
+                return `
+                    <div class="product-row grid grid-cols-1 sm:grid-cols-5 gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-200" id="product-row-${idPrefix}${index}">
+                        <div>
+                            <label for="${idPrefix}banana_type-${index}" class="block text-sm font-medium text-gray-700 mb-1">Banana Type</label>
+                            <select id="${idPrefix}banana_type-${index}" name="banana_type[]" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                onchange="${onInputChange}">
+                                <option value="">Select Type</option>
+                                ${BANANA_TYPES.map(type => 
+                                    `<option value="${type}" ${bananaType === type ? 'selected' : ''}>${type}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="${idPrefix}weight_kg-${index}" class="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
+                            <input type="number" id="${idPrefix}weight_kg-${index}" name="weight_kg[]" value="${weightKg}" 
+                                placeholder="e.g., 100" step="0.01" min="0.01" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                oninput="${onInputChange}">
+                        </div>
+                        <div>
+                            <label for="${idPrefix}quantity-${index}" class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                            <input type="number" id="${idPrefix}quantity-${index}" name="quantity[]" value="${quantity}" 
+                                placeholder="e.g., 50" step="1" min="1" required
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                oninput="${onInputChange}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Amount (₹)</label>
+                            <p class="w-full px-3 py-2 bg-gray-100 rounded-md font-semibold text-gray-800" 
+                                id="${idPrefix}amount-${index}">0.00</p>
+                        </div>
+                        <div class="flex items-end justify-end">
+                            <button type="button" onclick="${isEdit ? 'BananaSalesApp.removeEditProductRow(this)' : 'BananaSalesApp.removeNewProductRow(this)'}" 
+                                class="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 text-sm">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            function updateRemoveButtons(formType) {
+                const containerId = formType === 'new' ? 'new-products-container' : 'edit-products-container';
+                const container = document.getElementById(containerId);
+                const productRows = container.querySelectorAll('.product-row');
+                
+                productRows.forEach((row, index) => {
+                    const removeButton = row.querySelector('button');
+                    if (removeButton) {
+                        removeButton.style.display = productRows.length > 1 ? 'block' : 'none';
+                    }
+                });
+            }
+            
+            // New Sale Form Functions
+            let newProductRowCounter = 0;
+            
+            function addInitialNewProductRow() {
+                const container = document.getElementById('new-products-container');
+                container.innerHTML = createProductRowHtml(0, '', '', '', false);
+                newProductRowCounter = 1;
                 updateNewTotals();
                 updateRemoveButtons('new');
-            } else {
-                showFlashMessage('Cannot remove the last product row. A sale must have at least one product.', 'error');
             }
-        }
-        function updateNewTotals() {
-            let totalGrossWeight = 0; // Renamed to gross weight
-            let totalQuantity = 0;
-
-            document.querySelectorAll('#new-products-container .product-row').forEach(row => {
-                const weightInput = row.querySelector('input[name="weight_kg[]"]');
-                const quantityInput = row.querySelector('input[name="quantity[]"]');
-
-                const weight = parseFloat(weightInput.value);
-                const quantity = parseInt(quantityInput.value);
-
-                if (!isNaN(weight) && weight > 0) {
-                    totalGrossWeight += weight;
+            
+            function addNewProductRow() {
+                const container = document.getElementById('new-products-container');
+                container.insertAdjacentHTML('beforeend', createProductRowHtml(newProductRowCounter, '', '', '', false));
+                newProductRowCounter++;
+                updateNewTotals();
+                updateRemoveButtons('new');
+            }
+            
+            function removeNewProductRow(button) {
+                const container = document.getElementById('new-products-container');
+                if (container.childElementCount > 1) {
+                    const row = button.closest('.product-row');
+                    row.remove();
+                    updateNewTotals();
+                    updateRemoveButtons('new');
+                } else {
+                    showFlashMessage('Cannot remove the last product row. A sale must have at least one product.', 'error');
                 }
-                if (!isNaN(quantity) && quantity > 0) {
-                    totalQuantity += quantity;
+            }
+            
+            function updateNewTotals() {
+                let totalGrossWeight = 0;
+                let totalQuantity = 0;
+                let totalAmount = 0;
+                
+                document.querySelectorAll('#new-products-container .product-row').forEach(row => {
+                    const weightInput = row.querySelector('input[name="weight_kg[]"]');
+                    const quantityInput = row.querySelector('input[name="quantity[]"]');
+                    const bananaTypeSelect = row.querySelector('select[name="banana_type[]"]');
+                    const amountDisplay = row.querySelector('p[id^="new-amount-"]');
+                    
+                    const weight = parseFloat(weightInput.value) || 0;
+                    const quantity = parseInt(quantityInput.value) || 0;
+                    const bananaType = bananaTypeSelect.value;
+                    
+                    if (bananaType && weight > 0 && quantity > 0) {
+                        totalGrossWeight += weight;
+                        totalQuantity += quantity;
+                        
+                        // Calculate amount for this row (if price is set)
+                        const pricePerKg = parseFloat(document.getElementById('new-overall-price-per-kg').value) || 0;
+                        const rowAmount = weight * pricePerKg;
+                        totalAmount += rowAmount;
+                        
+                        if (amountDisplay) {
+                            amountDisplay.textContent = rowAmount.toFixed(2);
+                        }
+                    }
+                });
+                
+                const wastageWeight = parseFloat(document.getElementById('new-wastage-weight-kg').value) || 0;
+                let netBilledWeight = Math.max(0, totalGrossWeight - wastageWeight);
+                const pricePerKg = parseFloat(document.getElementById('new-overall-price-per-kg').value) || 0;
+                totalAmount = netBilledWeight * pricePerKg;
+                
+                // Update displays
+                document.getElementById('new-total-weight').textContent = totalGrossWeight.toFixed(2) + ' kg';
+                document.getElementById('new-net-billed-weight').textContent = netBilledWeight.toFixed(2) + ' kg';
+                document.getElementById('new-total-quantity').textContent = totalQuantity;
+                document.getElementById('new-total-amount-due').textContent = '₹' + totalAmount.toFixed(2);
+            }
+            
+            // Edit Sale Form Functions
+            let editProductRowCounter = 0;
+            
+            function loadEditProductRows(products) {
+                const container = document.getElementById('edit-products-container');
+                container.innerHTML = '';
+                editProductRowCounter = 0;
+                
+                if (products.length === 0) {
+                    products.push({ bananaType: '', weightKg: '', quantity: '' });
                 }
-            });
-
-            const wastageWeightInput = document.getElementById('new-wastage-weight-kg');
-            let wastageWeight = parseFloat(wastageWeightInput.value) || 0; // Get wastage, default to 0
-
-            let netBilledWeight = totalGrossWeight - wastageWeight;
-            if (netBilledWeight < 0) { // Ensure net weight doesn't go negative
-                netBilledWeight = 0;
-                // Optionally, adjust wastage to not exceed gross weight if desired for user input
-                // wastageWeightInput.value = totalGrossWeight.toFixed(2);
-                // wastageWeight = totalGrossWeight;
-            }
-
-            document.getElementById('new-total-weight').textContent = totalGrossWeight.toFixed(2) + ' kg'; // This is gross
-            // document.getElementById('new-wastage-weight-kg').value = wastageWeight.toFixed(2); // Keep value updated if auto-adjusted
-            document.getElementById('new-net-billed-weight').textContent = netBilledWeight.toFixed(2) + ' kg'; // Display net
-            document.getElementById('new-total-quantity').textContent = totalQuantity;
-
-            const overallPricePerKgInput = document.getElementById('new-overall-price-per-kg');
-            const overallPricePerKg = parseFloat(overallPricePerKgInput.value);
-            let totalAmountDue = 0;
-            // Calculate total amount based on NET billed weight
-            if (!isNaN(netBilledWeight) && !isNaN(overallPricePerKg)) {
-                totalAmountDue = netBilledWeight * overallPricePerKg;
-            }
-            document.getElementById('new-total-amount-due').textContent = '₹' + totalAmountDue.toFixed(2);
-        }
-
-        // --- Edit Sale Form Specific Functions (must be global for inline calls) ---
-        let editProductRowCounter = 0; // Reset counter for edit form
-        function loadEditProductRows(products) {
-            const container = document.getElementById('edit-products-container');
-            container.innerHTML = '';
-            editProductRowCounter = 0;
-            if (products.length === 0) {
-                products.push({ bananaType: '', weightKg: '', quantity: '' });
-            }
-            products.forEach(product => {
-                container.insertAdjacentHTML('beforeend', createProductRowHtml(editProductRowCounter, product.bananaType, product.weightKg, product.quantity, true));
-                editProductRowCounter++;
-            });
-            updateEditTotals();
-            updateRemoveButtons('edit');
-        }
-        function addEditProductRow() {
-            const container = document.getElementById('edit-products-container');
-            container.insertAdjacentHTML('beforeend', createProductRowHtml(editProductRowCounter, '', '', '', true));
-            editProductRowCounter++;
-            updateEditTotals();
-            updateRemoveButtons('edit');
-        }
-        function removeEditProductRow(button) {
-            const container = document.getElementById('edit-products-container');
-            if (container.childElementCount > 1) {
-                const row = button.closest('.product-row');
-                row.remove();
+                
+                products.forEach(product => {
+                    container.insertAdjacentHTML('beforeend', 
+                        createProductRowHtml(editProductRowCounter, product.bananaType, product.weightKg, product.quantity, true));
+                    editProductRowCounter++;
+                });
+                
                 updateEditTotals();
                 updateRemoveButtons('edit');
-            } else {
-                showFlashMessage('Cannot remove the last product row. A sale must have at least one product.', 'error');
             }
-        }
-        function updateEditTotals() {
-            let totalGrossWeight = 0; // Renamed to gross weight
-            let totalQuantity = 0;
-
-            document.querySelectorAll('#edit-products-container .product-row').forEach(row => {
-                const weightInput = row.querySelector('input[name="weight_kg[]"]');
-                const quantityInput = row.querySelector('input[name="quantity[]']');
-
-                const weight = parseFloat(weightInput.value);
-                const quantity = parseInt(quantityInput.value);
-
-                if (!isNaN(weight) && weight > 0) {
-                    totalGrossWeight += weight;
+            
+            function addEditProductRow() {
+                const container = document.getElementById('edit-products-container');
+                container.insertAdjacentHTML('beforeend', createProductRowHtml(editProductRowCounter, '', '', '', true));
+                editProductRowCounter++;
+                updateEditTotals();
+                updateRemoveButtons('edit');
+            }
+            
+            function removeEditProductRow(button) {
+                const container = document.getElementById('edit-products-container');
+                if (container.childElementCount > 1) {
+                    const row = button.closest('.product-row');
+                    row.remove();
+                    updateEditTotals();
+                    updateRemoveButtons('edit');
+                } else {
+                    showFlashMessage('Cannot remove the last product row. A sale must have at least one product.', 'error');
                 }
-                if (!isNaN(quantity) && quantity > 0) {
-                    totalQuantity += quantity;
-                }
-            });
-
-            const wastageWeightInput = document.getElementById('edit-wastage-weight-kg');
-            let wastageWeight = parseFloat(wastageWeightInput.value) || 0; // Get wastage, default to 0
-
-            let netBilledWeight = totalGrossWeight - wastageWeight;
-            if (netBilledWeight < 0) { // Ensure net weight doesn't go negative
-                netBilledWeight = 0;
-                // Optionally, adjust wastage to not exceed gross weight if desired for user input
-                // wastageWeightInput.value = totalGrossWeight.toFixed(2);
-                // wastageWeight = totalGrossWeight;
             }
-
-            document.getElementById('edit-total-weight').textContent = totalGrossWeight.toFixed(2) + ' kg'; // This is gross
-            // document.getElementById('edit-wastage-weight-kg').value = wastageWeight.toFixed(2); // Keep value updated if auto-adjusted
-            document.getElementById('edit-net-billed-weight').textContent = netBilledWeight.toFixed(2) + ' kg'; // Display net
-            document.getElementById('edit-total-quantity').textContent = totalQuantity;
-
-            const overallPricePerKgInput = document.getElementById('edit-overall-price-per-kg');
-            const overallPricePerKg = parseFloat(overallPricePerKgInput.value);
-            let totalAmountDue = 0;
-            // Calculate total amount based on NET billed weight
-            if (!isNaN(netBilledWeight) && !isNaN(overallPricePerKg)) {
-                totalAmountDue = netBilledWeight * overallPricePerKg;
-            }
-            document.getElementById('edit-total-amount-due').textContent = '₹' + totalAmountDue.toFixed(2);
-        }
-
-        // Function to get and increment the bill number from Firestore
-        async function getAndIncrementBillNumber() {
-            try {
-                // Use the correct path for billCounterDocRef
-                const docSnap = await billCounterDocRef.get();
-                let currentNumber = 1; // Default starting number
-
-                if (docSnap.exists) {
-                    currentNumber = (docSnap.data().currentNumber || 0) + 1;
-                }
-
-                await billCounterDocRef.set({ currentNumber: currentNumber });
-                return currentNumber;
-            } catch (error) {
-                console.error("Error getting or incrementing bill number:", error);
-                showFlashMessage('Error generating bill number. Please try again.', 'error');
-                return null; // Indicate failure
-            }
-        }
-
-
-        // --- Core Application Functions (must be global for inline calls) ---
-
-        // Render Sales List (FETCHES FROM FIREBASE)
-        async function renderSalesList() {
-            // Check if salesCollection is initialized. If not, Firebase initialization might have failed.
-            if (!salesCollection) {
-                console.error("Firestore salesCollection not initialized. Cannot render sales list.");
-                // Display an error message to the user if the database is not ready.
-                document.getElementById('sales-list-container').innerHTML = '<p class="text-red-600 text-center py-4">Database not ready. Please refresh the page or check your Firebase setup in the browser console.</p>';
-                document.getElementById('total-sales-amount').textContent = '₹0.00';
-                document.getElementById('total-amount-received').textContent = '₹0.00';
-                document.getElementById('total-outstanding').textContent = '₹0.00';
-                return;
-            }
-
-            const salesListContainer = document.getElementById('sales-list-container');
-            salesListContainer.innerHTML = '<p class="text-gray-600 text-center py-4">Loading sales data...</p>';
-
-            try {
-                const snapshot = await salesCollection.orderBy('date', 'desc').get();
-                const sales = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-
-                if (sales.length === 0) {
-                    salesListContainer.innerHTML = '<p class="text-gray-600 text-center py-4">No sales recorded yet. Add a new sale above!</p>';
-                    document.getElementById('total-sales-amount').textContent = '₹0.00';
-                    document.getElementById('total-amount-received').textContent = '₹0.00';
-                    document.getElementById('total-outstanding').textContent = '₹0.00';
-                    return;
-                }
-
-                let totalSalesAmount = 0;
-                let totalAmountReceived = 0;
-                let totalOutstanding = 0;
-
-                const table = document.createElement('table');
-                table.className = 'min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden';
-                table.innerHTML = `
-                    <thead class="bg-green-100">
-                        <tr>
-                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Bill No.</th>
-                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Date</th>
-                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Merchant</th>
-                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Gross Weight (kg)</th>
-                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Net Weight (kg)</th>
-                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Total Quantity</th>
-                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Overall Price/kg (₹)</th>
-                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Total (₹)</th>
-                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Received (₹)</th>
-                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Balance (₹)</th>
-                            <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200" id="sales-table-body">
-                    </tbody>
-                `;
-                salesListContainer.innerHTML = '';
-                salesListContainer.appendChild(table);
-
-                const salesTableBody = document.getElementById('sales-table-body');
-                sales.forEach(sale => {
-                    totalSalesAmount += sale.totalAmount;
-                    totalAmountReceived += sale.amountReceived;
-                    totalOutstanding += sale.balanceDue;
-
-                    const row = document.createElement('tr');
-                    row.className = 'hover:bg-gray-50';
-                    row.innerHTML = `
-                        <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sale.billNumber}</td>
-                        <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.date}</td>
-                        <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.merchantName}</td>
-                        <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${(sale.totalWeightKg || 0).toFixed(2)}</td>
-                        <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${(sale.netWeightKg || 0).toFixed(2)}</td>
-                        <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.totalQuantity}</td>
-                        <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.overallPricePerKg.toFixed(2)}</td>
-                        <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">₹${sale.totalAmount.toFixed(2)}</td>
-                        <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-blue-600">₹${sale.amountReceived.toFixed(2)}</td>
-                        <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-bold ${sale.balanceDue > 0 ? 'text-red-600' : 'text-green-600'}">₹${sale.balanceDue.toFixed(2)}</td>
-                        <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                                <button onclick="openEditModal('${sale.id}')" class="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-xs sm:text-sm">
-                                    Edit
-                                </button>
-                                <button onclick="openPaymentModal('${sale.id}')" class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs sm:text-sm">
-                                    Payment
-                                </button>
-                                <button onclick="openBillModal('${sale.id}')" class="px-3 py-1 bg-purple-500 text-white rounded-md hover:bg-purple-600 text-xs sm:text-sm">
-                                    Bill
-                                </button>
-                                <button onclick="openConfirmModal('delete', '${sale.id}')" class="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-xs sm:text-sm">
-                                    Delete
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                salesTableBody.appendChild(row);
-            });
-
-            document.getElementById('total-sales-amount').textContent = `₹${totalSalesAmount.toFixed(2)}`;
-            document.getElementById('total-amount-received').textContent = `₹${totalAmountReceived.toFixed(2)}`;
-            document.getElementById('total-outstanding').textContent = `₹${totalOutstanding.toFixed(2)}`;
-
-        } catch (error) {
-            console.error("Error fetching sales: ", error);
-            showFlashMessage('Error loading sales data. Please check your Firebase setup and network connection.', 'error');
-            salesListContainer.innerHTML = '<p class="text-red-600 text-center py-4">Failed to load sales data.</p>';
-        }
-    }
-
-    // --- Modal Functions (called by onclick and need db/salesCollection) ---
-
-    async function openEditModal(saleId) {
-        try {
-            const docRef = salesCollection.doc(saleId);
-            const docSnap = await docRef.get();
-
-            if (!docSnap.exists) {
-                showFlashMessage('Sale not found for editing.', 'error');
-                return;
-            }
-            const saleToEdit = { id: docSnap.id, ...docSnap.data() };
-
-            document.getElementById('edit-sale-id').value = saleToEdit.id;
-            document.getElementById('edit-sale-date').value = saleToEdit.date;
-            document.getElementById('edit-merchant-name').value = saleToEdit.merchantName;
-            document.getElementById('edit-overall-price-per-kg').value = saleToEdit.overallPricePerKg.toFixed(2);
-            // Load wastage weight, default to 0 if not present (for old sales)
-            document.getElementById('edit-wastage-weight-kg').value = (saleToEdit.wastageWeightKg || 0).toFixed(2);
-
-
-            loadEditProductRows(saleToEdit.products || []); // This also calls updateEditTotals()
-            document.getElementById('edit-sale-modal').classList.remove('hidden');
-
-        } catch (error) {
-            console.error("Error opening edit modal: ", error);
-            showFlashMessage('Error loading sale for edit. Please try again.', 'error');
-        }
-    }
-
-    async function openPaymentModal(saleId) {
-        try {
-            const docRef = salesCollection.doc(saleId);
-            const docSnap = await docRef.get();
-
-            if (!docSnap.exists) {
-                showFlashMessage('Sale not found for payment.', 'error');
-                return;
-            }
-            const saleToPay = { id: docSnap.id, ...docSnap.data() };
-
-            document.getElementById('payment-sale-id').value = saleToPay.id;
-            document.getElementById('payment-bill-number').textContent = saleToPay.billNumber;
-            document.getElementById('payment-merchant-name').textContent = saleToPay.merchantName;
-            document.getElementById('payment-total-amount').textContent = saleToPay.totalAmount.toFixed(2);
-            document.getElementById('payment-balance-due').textContent = saleToPay.balanceDue.toFixed(2);
-            document.getElementById('payment-amount-input').value = saleToPay.balanceDue.toFixed(2);
-
-            document.getElementById('payment-modal').classList.remove('hidden');
-
-        } catch (error) {
-            console.error("Error opening payment modal: ", error);
-            showFlashMessage('Error loading sale for payment. Please try again.', 'error');
-        }
-    }
-
-    async function openBillModal(saleId) {
-        try {
-            const docRef = salesCollection.doc(saleId);
-            const docSnap = await docRef.get();
-
-            if (!docSnap.exists) {
-                showFlashMessage('Sale not found for bill view.', 'error');
-                return;
-            }
-            const saleToView = { id: docSnap.id, ...docSnap.data() };
-
-            document.getElementById('bill-bill-number').textContent = saleToView.billNumber;
-            document.getElementById('bill-date').textContent = saleToView.date;
-            document.getElementById('bill-merchant-name').textContent = saleToView.merchantName;
-
-            const productsTbody = document.getElementById('bill-products-tbody');
-            productsTbody.innerHTML = '';
-
-            saleToView.products.forEach(product => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">${product.bananaType}</td>
-                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">${product.weightKg.toFixed(2)}</td>
-                    <td class="border border-gray-300 px-4 py-2 text-sm text-gray-800">${product.quantity}</td>
-                    <td class="border border-gray-300 px-4 py-2 text-right text-sm text-gray-800">
-                        ${(product.weightKg * saleToView.overallPricePerKg).toFixed(2)}
-                    </td>
-                `;
-                productsTbody.appendChild(row);
-            });
-
-            // Update the bill to show Gross, Wastage, and Net Billed Weights
-            document.getElementById('bill-gross-weight').textContent = (saleToView.totalWeightKg || 0).toFixed(2);
-            document.getElementById('bill-wastage-weight').textContent = (saleToView.wastageWeightKg || 0).toFixed(2);
-            document.getElementById('bill-net-billed-weight').textContent = (saleToView.netWeightKg || 0).toFixed(2);
-
-            document.getElementById('bill-total-quantity').textContent = saleToView.totalQuantity;
-            document.getElementById('bill-overall-price-per-kg').textContent = saleToView.overallPricePerKg.toFixed(2);
-            document.getElementById('bill-total-amount').textContent = saleToView.totalAmount.toFixed(2);
-            document.getElementById('bill-amount-received').textContent = saleToView.amountReceived.toFixed(2);
-            document.getElementById('bill-balance-due').textContent = saleToView.balanceDue.toFixed(2);
-
-            document.getElementById('bill-view-modal').classList.remove('hidden');
-
-        } catch (error) {
-            console.error("Error opening bill modal: ", error);
-            showFlashMessage('Error loading bill data. Please try again.', 'error');
-        }
-    }
-
-    // Confirmation Modal Logic (for Delete)
-    let currentConfirmAction = null;
-
-    function openConfirmModal(actionType, saleId) {
-        const confirmModal = document.getElementById('confirm-modal');
-        const confirmMessageElement = document.getElementById('confirm-message');
-
-        if (actionType === 'delete') {
-            confirmMessageElement.textContent = "Are you sure you want to delete this sale record? This action cannot be undone.";
-            currentConfirmAction = async () => {
-                try {
-                    await salesCollection.doc(saleId).delete();
-                    showFlashMessage('Sale deleted successfully!', 'success');
-                    confirmModal.classList.add('hidden');
-                    renderSalesList();
-                } catch (error) {
-                    console.error("Error deleting sale: ", error);
-                    showFlashMessage('Error deleting sale. Please try again.', 'error');
-                    confirmModal.classList.add('hidden');
-                }
-            };
-        }
-
-        confirmModal.classList.remove('hidden');
-    }
-
-
-    // --- Firebase Initialization and Main Event Listeners (on DOMContentLoaded) ---
-    // This block runs once the HTML document is fully loaded.
-    document.addEventListener('DOMContentLoaded', () => {
-        // Log the firebaseConfig for debugging - check if it matches what you expect
-        console.log("Firebase Config:", firebaseConfig);
-
-        // Initialize Firebase and setup database references
-        try {
-            // Check if firebaseConfig is valid before proceeding
-            if (!firebaseConfig) {
-                console.error("Firebase configuration is missing or invalid. Cannot initialize Firebase.");
-                document.getElementById('sales-list-container').innerHTML = '<p class="text-red-600 text-center py-4">Firebase configuration missing. Check console for details.</p>';
-                showFlashMessage('Application initialization failed: Firebase config missing.', 'error');
-                return;
-            }
-
-            // Check if firebase object exists before initializing
-            if (typeof firebase === 'undefined' || typeof firebase.initializeApp === 'undefined') {
-                console.error("Firebase SDK not loaded. Please check your network and script tags.");
-                document.getElementById('sales-list-container').innerHTML = '<p class="text-red-600 text-center py-4">Firebase SDK did not load. Check network and script tags in HTML.</p>';
-                showFlashMessage('Firebase SDK not found. Check console.', 'error');
-                return; // Stop further execution if SDK isn't loaded
-            }
-
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.firestore(); // Assign to global db variable
-            // Corrected collection paths to align with Canvas security rules
-            salesCollection = db.collection('artifacts').doc(appId).collection('public').collection('data').collection('sales');
-            billCounterDocRef = db.collection('artifacts').doc(appId).collection('public').collection('data').collection('metadata').doc('billCounter');
-            console.log("Firebase initialized successfully.");
-
-            // Initial render of sales data
-            renderSalesList();
-            addInitialNewProductRow(); // For the 'Add New Sale' form initially
-
-        } catch (initError) {
-            console.error("Firebase Initialization Error (caught):", initError);
-            document.getElementById('sales-list-container').innerHTML = '<p class="text-red-600 text-center py-4">Error initializing Firebase. Please check your console for details and ensure your Firebase setup is correct.</p>';
-            showFlashMessage('Application initialization failed. Check console for Firebase errors.', 'error');
-            return; // Stop execution if Firebase fails to initialize
-        }
-
-        // --- Event Listeners for Modals and Forms (set up AFTER Firebase is initialized and DOM is ready) ---
-
-        // Add Sale Modal
-        document.getElementById('add-sale-btn').addEventListener('click', () => {
-            document.getElementById('new-sale-date').value = '';
-            document.getElementById('new-merchant-name').value = '';
-            document.getElementById('new-overall-price-per-kg').value = '';
-            document.getElementById('new-wastage-weight-kg').value = '0'; // Reset wastage on new sale
-            addInitialNewProductRow();
-            document.getElementById('add-sale-modal').classList.remove('hidden');
-        });
-        document.getElementById('cancel-add-sale-btn').addEventListener('click', () => {
-            document.getElementById('add-sale-modal').classList.add('hidden');
-        });
-        document.getElementById('add-new-product-row-btn').addEventListener('click', addNewProductRow);
-        document.getElementById('new-overall-price-per-kg').addEventListener('input', updateNewTotals);
-        // Add listener for wastage input as well
-        document.getElementById('new-wastage-weight-kg').addEventListener('input', updateNewTotals);
-
-        document.getElementById('add-sale-form').addEventListener('submit', async (event) => {
-            event.preventDefault();
-            try {
-                const newSaleDate = document.getElementById('new-sale-date').value;
-                const newMerchantName = document.getElementById('new-merchant-name').value;
-                const newOverallPricePerKg = parseFloat(document.getElementById('new-overall-price-per-kg').value);
-                const newWastageWeight = parseFloat(document.getElementById('new-wastage-weight-kg').value) || 0; // Get wastage weight
-
-                const productRows = document.querySelectorAll('#new-products-container .product-row');
-                const products = [];
-                let totalGrossWeightKg = 0; // Renamed to gross
+            
+            function updateEditTotals() {
+                let totalGrossWeight = 0;
                 let totalQuantity = 0;
-
-                let isValid = true;
-                if (productRows.length === 0) {
-                    showFlashMessage('Please add at least one banana product.', 'error');
-                    isValid = false;
-                }
-
-                productRows.forEach(row => {
-                    const bananaType = row.querySelector('select[name="banana_type[]"]').value;
+                let totalAmount = 0;
+                
+                document.querySelectorAll('#edit-products-container .product-row').forEach(row => {
                     const weightInput = row.querySelector('input[name="weight_kg[]"]');
                     const quantityInput = row.querySelector('input[name="quantity[]"]');
-
-                    const weight = parseFloat(weightInput.value);
-                    const quantity = parseInt(quantityInput.value);
-
-                    if (!bananaType || isNaN(weight) || weight <= 0 || isNaN(quantity) || quantity <= 0) {
-                        showFlashMessage('Please fill all product fields with valid positive numbers for each entry.', 'error');
-                        isValid = false;
+                    const bananaTypeSelect = row.querySelector('select[name="banana_type[]"]');
+                    const amountDisplay = row.querySelector('p[id^="edit-amount-"]');
+                    
+                    const weight = parseFloat(weightInput.value) || 0;
+                    const quantity = parseInt(quantityInput.value) || 0;
+                    const bananaType = bananaTypeSelect.value;
+                    
+                    if (bananaType && weight > 0 && quantity > 0) {
+                        totalGrossWeight += weight;
+                        totalQuantity += quantity;
+                        
+                        // Calculate amount for this row (if price is set)
+                        const pricePerKg = parseFloat(document.getElementById('edit-overall-price-per-kg').value) || 0;
+                        const rowAmount = weight * pricePerKg;
+                        totalAmount += rowAmount;
+                        
+                        if (amountDisplay) {
+                            amountDisplay.textContent = rowAmount.toFixed(2);
+                        }
                     }
-                    products.push({ bananaType, weightKg: weight, quantity: quantity });
-                    totalGrossWeightKg += weight;
-                    totalQuantity += quantity;
                 });
-
-                if (!isValid) return; // Stop if product data is invalid
-
-                // Calculate Net Billed Weight
-                let netBilledWeightKg = totalGrossWeightKg - newWastageWeight;
-                if (netBilledWeightKg < 0) { // Ensure net weight doesn't go negative
-                    netBilledWeightKg = 0;
-                    showFlashMessage('Wastage weight cannot exceed gross weight. Net billed weight adjusted to 0.', 'error');
-                }
-
-                if (isNaN(newOverallPricePerKg) || newOverallPricePerKg <= 0) {
-                    showFlashMessage('Please enter a valid positive Overall Price per kg.', 'error');
-                    return;
-                }
-
-                const totalAmount = netBilledWeightKg * newOverallPricePerKg; // Calculate total amount based on NET billed weight
-
-                const nextBillNumber = await getAndIncrementBillNumber(); // Get the next sequential bill number
-                if (nextBillNumber === null) {
-                    // Error already handled by getAndIncrementBillNumber
-                    return;
-                }
-
-                const newSale = {
-                    billNumber: `BILL-${nextBillNumber}`, // Use the sequential bill number
-                    date: newSaleDate,
-                    merchantName: newMerchantName,
-                    products: products,
-                    totalWeightKg: totalGrossWeightKg, // Store gross weight
-                    wastageWeightKg: newWastageWeight, // Store wastage weight
-                    netWeightKg: netBilledWeightKg, // Store net billed weight
-                    totalQuantity: totalQuantity,
-                    overallPricePerKg: newOverallPricePerKg,
-                    totalAmount: totalAmount,
-                    amountReceived: 0,
-                    balanceDue: totalAmount
-                };
-
-                await salesCollection.add(newSale);
-                showFlashMessage('Sale added successfully!', 'success');
-
+                
+                const wastageWeight = parseFloat(document.getElementById('edit-wastage-weight-kg').value) || 0;
+                let netBilledWeight = Math.max(0, totalGrossWeight - wastageWeight);
+                const pricePerKg = parseFloat(document.getElementById('edit-overall-price-per-kg').value) || 0;
+                totalAmount = netBilledWeight * pricePerKg;
+                
+                // Update displays
+                document.getElementById('edit-total-weight').textContent = totalGrossWeight.toFixed(2) + ' kg';
+                document.getElementById('edit-net-billed-weight').textContent = netBilledWeight.toFixed(2) + ' kg';
+                document.getElementById('edit-total-quantity').textContent = totalQuantity;
+                document.getElementById('edit-total-amount-due').textContent = '₹' + totalAmount.toFixed(2);
+            }
+            
+            // Modal Functions
+            function openAddSaleModal() {
+                document.getElementById('new-sale-date').value = new Date().toISOString().split('T')[0];
+                document.getElementById('new-merchant-name').value = '';
+                document.getElementById('new-overall-price-per-kg').value = '';
+                document.getElementById('new-wastage-weight-kg').value = '0';
+                addInitialNewProductRow();
+                document.getElementById('add-sale-modal').classList.remove('hidden');
+            }
+            
+            function closeAddSaleModal() {
                 document.getElementById('add-sale-modal').classList.add('hidden');
-                document.getElementById('add-sale-form').reset();
-                renderSalesList();
-
-            } catch (error) {
-                console.error("Error adding sale: ", error);
-                showFlashMessage('Error adding sale. Please try again.', 'error');
             }
-        });
-
-        // Edit Sale Modal
-        document.getElementById('add-edit-product-row-btn').addEventListener('click', addEditProductRow);
-        document.getElementById('edit-overall-price-per-kg').addEventListener('input', updateEditTotals);
-        // Add listener for wastage input as well
-        document.getElementById('edit-wastage-weight-kg').addEventListener('input', updateEditTotals);
-
-        document.getElementById('cancel-edit-sale-btn').addEventListener('click', () => {
-            document.getElementById('edit-sale-modal').classList.add('hidden');
-        });
-        document.getElementById('edit-sale-form').addEventListener('submit', async (event) => {
-            event.preventDefault();
-
-            try {
-                const saleId = document.getElementById('edit-sale-id').value;
-                const updatedDate = document.getElementById('edit-sale-date').value;
-                const updatedMerchant = document.getElementById('edit-merchant-name').value;
-                const updatedOverallPricePerKg = parseFloat(document.getElementById('edit-overall-price-per-kg').value);
-                const updatedWastageWeight = parseFloat(document.getElementById('edit-wastage-weight-kg').value) || 0; // Get wastage weight
-
-                const productRows = document.querySelectorAll('#edit-products-container .product-row');
-                const updatedProducts = [];
-                let updatedTotalGrossWeightKg = 0; // Renamed to gross
-                let updatedTotalQuantity = 0;
-
-                let isValid = true;
-                if (productRows.length === 0) {
-                    showFlashMessage('Please add at least one banana product for editing.', 'error');
-                    isValid = false;
-                }
-
-                productRows.forEach(row => {
-                    const bananaType = row.querySelector('select[name="banana_type[]"]').value;
-                    const weightInput = row.querySelector('input[name="weight_kg[]"]');
-                    const quantityInput = row.querySelector('input[name="quantity[]"]');
-
-                    const weight = parseFloat(weightInput.value);
-                    const quantity = parseInt(quantityInput.value);
-
-                    if (!bananaType || isNaN(weight) || weight <= 0 || isNaN(quantity) || quantity <= 0) {
-                        showFlashMessage('Please fill all product fields with valid positive numbers for each entry.', 'error');
-                        isValid = false;
+            
+            async function openEditModal(saleId) {
+                try {
+                    const docRef = salesCollection.doc(saleId);
+                    const docSnap = await docRef.get();
+                    
+                    if (!docSnap.exists) {
+                        showFlashMessage('Sale not found for editing.', 'error');
+                        return;
                     }
-                    updatedProducts.push({ bananaType, weightKg: weight, quantity: quantity });
-                    updatedTotalGrossWeightKg += weight;
-                    updatedTotalQuantity += quantity;
-                });
-
-                if (!isValid) return; // Stop if product data is invalid
-
-                // Calculate Net Billed Weight
-                let updatedNetBilledWeightKg = updatedTotalGrossWeightKg - updatedWastageWeight;
-                if (updatedNetBilledWeightKg < 0) {
-                    updatedNetBilledWeightKg = 0;
-                    showFlashMessage('Wastage weight cannot exceed gross weight. Net billed weight adjusted to 0.', 'error');
+                    
+                    const sale = docSnap.data();
+                    
+                    document.getElementById('edit-sale-id').value = saleId;
+                    document.getElementById('edit-sale-date').value = sale.date;
+                    document.getElementById('edit-merchant-name').value = sale.merchantName;
+                    document.getElementById('edit-overall-price-per-kg').value = sale.overallPricePerKg.toFixed(2);
+                    document.getElementById('edit-wastage-weight-kg').value = (sale.wastageWeightKg || 0).toFixed(2);
+                    
+                    loadEditProductRows(sale.products || []);
+                    document.getElementById('edit-sale-modal').classList.remove('hidden');
+                    
+                } catch (error) {
+                    console.error("Error opening edit modal:", error);
+                    showFlashMessage('Error loading sale for editing. Please try again.', 'error');
                 }
-
-                if (isNaN(updatedOverallPricePerKg) || updatedOverallPricePerKg <= 0) {
-                    showFlashMessage('Please enter a valid positive Overall Price per kg.', 'error');
-                    return;
-                }
-
-                const updatedTotalAmount = updatedNetBilledWeightKg * updatedOverallPricePerKg; // Use netBilledWeight
-
-                const currentSaleDoc = await salesCollection.doc(saleId).get();
-                if (!currentSaleDoc.exists) {
-                    showFlashMessage('Error: Sale not found for update.', 'error');
-                    return;
-                }
-                const currentSaleData = currentSaleDoc.data();
-                const currentAmountReceived = currentSaleData.amountReceived || 0;
-
-                let updatedBalanceDue = updatedTotalAmount - currentAmountReceived;
-                if (updatedBalanceDue < 0) {
-                    updatedBalanceDue = 0;
-                }
-
-                const updateData = {
-                    date: updatedDate,
-                    merchantName: updatedMerchant,
-                    products: updatedProducts,
-                    totalWeightKg: updatedTotalGrossWeightKg, // Store updated gross weight
-                    wastageWeightKg: updatedWastageWeight, // Store updated wastage weight
-                    netWeightKg: updatedNetBilledWeightKg, // Store updated net billed weight
-                    totalQuantity: updatedTotalQuantity,
-                    overallPricePerKg: updatedOverallPricePerKg,
-                    totalAmount: updatedTotalAmount,
-                    balanceDue: updatedBalanceDue
-                };
-
-                await salesCollection.doc(saleId).update(updateData);
-                showFlashMessage('Sale updated successfully!', 'success');
-
+            }
+            
+            function closeEditSaleModal() {
                 document.getElementById('edit-sale-modal').classList.add('hidden');
-                renderSalesList();
-
-            } catch (error) {
-                console.error("Error updating sale: ", error);
-                showFlashMessage('Error updating sale. Please try again.', 'error');
             }
-        });
-
-        // Payment Modal
-        document.getElementById('cancel-payment-btn').addEventListener('click', () => {
-            document.getElementById('payment-modal').classList.add('hidden');
-        });
-        document.getElementById('payment-form').addEventListener('submit', async (event) => {
-            event.preventDefault();
-
-            try {
-                const saleId = document.getElementById('payment-sale-id').value;
-                const paymentAmount = parseFloat(document.getElementById('payment-amount-input').value);
-
-                if (isNaN(paymentAmount) || paymentAmount <= 0) {
-                    showFlashMessage('Please enter a valid positive payment amount.', 'error');
-                    return;
+            
+            async function openPaymentModal(saleId) {
+                try {
+                    const docRef = salesCollection.doc(saleId);
+                    const docSnap = await docRef.get();
+                    
+                    if (!docSnap.exists) {
+                        showFlashMessage('Sale not found for payment.', 'error');
+                        return;
+                    }
+                    
+                    const sale = docSnap.data();
+                    
+                    document.getElementById('payment-sale-id').value = saleId;
+                    document.getElementById('payment-bill-number').textContent = sale.billNumber;
+                    document.getElementById('payment-merchant-name').textContent = sale.merchantName;
+                    document.getElementById('payment-total-amount').textContent = sale.totalAmount.toFixed(2);
+                    document.getElementById('payment-amount-received').textContent = sale.amountReceived.toFixed(2);
+                    document.getElementById('payment-balance-due').textContent = sale.balanceDue.toFixed(2);
+                    document.getElementById('payment-amount-input').value = sale.balanceDue.toFixed(2);
+                    
+                    document.getElementById('payment-modal').classList.remove('hidden');
+                    
+                } catch (error) {
+                    console.error("Error opening payment modal:", error);
+                    showFlashMessage('Error loading sale for payment. Please try again.', 'error');
                 }
-
-                const docRef = salesCollection.doc(saleId);
-                const docSnap = await docRef.get();
-                if (!docSnap.exists) {
-                    showFlashMessage('Error: Sale not found for payment update.', 'error');
-                    return;
-                }
-                const currentSaleData = docSnap.data();
-
-                let newAmountReceived = (currentSaleData.amountReceived || 0) + paymentAmount;
-                let newBalanceDue = currentSaleData.totalAmount - newAmountReceived;
-                if (newBalanceDue < 0) {
-                    newBalanceDue = 0;
-                }
-
-                await docRef.update({
-                    amountReceived: newAmountReceived,
-                    balanceDue: newBalanceDue
-                });
-
-                showFlashMessage('Payment recorded successfully!', 'success');
+            }
+            
+            function closePaymentModal() {
                 document.getElementById('payment-modal').classList.add('hidden');
+            }
+            
+            async function openBillModal(saleId) {
+                try {
+                    const docRef = salesCollection.doc(saleId);
+                    const docSnap = await docRef.get();
+                    
+                    if (!docSnap.exists) {
+                        showFlashMessage('Sale not found for bill view.', 'error');
+                        return;
+                    }
+                    
+                    const sale = docSnap.data();
+                    
+                    // Set bill details
+                    document.getElementById('bill-bill-number').textContent = sale.billNumber;
+                    document.getElementById('bill-date').textContent = sale.date;
+                    document.getElementById('bill-merchant-name').textContent = sale.merchantName;
+                    
+                    // Set merchant details if available
+                    const merchantSnapshot = await merchantsCollection
+                        .where('name', '==', sale.merchantName)
+                        .limit(1)
+                        .get();
+                    
+                    if (!merchantSnapshot.empty) {
+                        const merchant = merchantSnapshot.docs[0].data();
+                        document.getElementById('bill-merchant-address').textContent = 
+                            merchant.address || '(Address not specified)';
+                        document.getElementById('bill-merchant-contact').textContent = 
+                            merchant.contact || '(Contact not specified)';
+                    } else {
+                        document.getElementById('bill-merchant-address').textContent = '(Address not specified)';
+                        document.getElementById('bill-merchant-contact').textContent = '(Contact not specified)';
+                    }
+                    
+                    // Add products to bill
+                    const productsTbody = document.getElementById('bill-products-tbody');
+                    productsTbody.innerHTML = '';
+                    
+                    sale.products.forEach(product => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="p-3 border border-gray-300 text-gray-800">${product.bananaType}</td>
+                            <td class="p-3 border border-gray-300 text-gray-800">${product.weightKg.toFixed(2)}</td>
+                            <td class="p-3 border border-gray-300 text-gray-800">${product.quantity}</td>
+                            <td class="p-3 border border-gray-300 text-gray-800 text-right">${sale.overallPricePerKg.toFixed(2)}</td>
+                            <td class="p-3 border border-gray-300 text-gray-800 text-right">${(product.weightKg * sale.overallPricePerKg).toFixed(2)}</td>
+                        `;
+                        productsTbody.appendChild(row);
+                    });
+                    
+                    // Set totals
+                    document.getElementById('bill-gross-weight').textContent = (sale.totalWeightKg || 0).toFixed(2);
+                    document.getElementById('bill-wastage-weight').textContent = (sale.wastageWeightKg || 0).toFixed(2);
+                    document.getElementById('bill-net-billed-weight').textContent = (sale.netWeightKg || 0).toFixed(2);
+                    document.getElementById('bill-total-quantity').textContent = sale.totalQuantity;
+                    document.getElementById('bill-overall-price-per-kg').textContent = sale.overallPricePerKg.toFixed(2);
+                    document.getElementById('bill-total-amount').textContent = sale.totalAmount.toFixed(2);
+                    document.getElementById('bill-amount-received').textContent = sale.amountReceived.toFixed(2);
+                    document.getElementById('bill-balance-due').textContent = sale.balanceDue.toFixed(2);
+                    
+                    document.getElementById('bill-view-modal').classList.remove('hidden');
+                    
+                } catch (error) {
+                    console.error("Error opening bill modal:", error);
+                    showFlashMessage('Error loading bill data. Please try again.', 'error');
+                }
+            }
+            
+            function closeBillModal() {
+                document.getElementById('bill-view-modal').classList.add('hidden');
+            }
+            
+            function printBill() {
+                window.print();
+            }
+            
+            function openConfirmModal(actionType, saleId, merchantName = '') {
+                const confirmModal = document.getElementById('confirm-modal');
+                const confirmTitle = document.getElementById('confirm-title');
+                const confirmMessage = document.getElementById('confirm-message');
+                
+                let actionFunction;
+                
+                if (actionType === 'delete') {
+                    confirmTitle.textContent = 'Confirm Deletion';
+                    confirmMessage.textContent = `Are you sure you want to delete sale ${saleId}? This action cannot be undone.`;
+                    
+                    actionFunction = async () => {
+                        try {
+                            await salesCollection.doc(saleId).delete();
+                            showFlashMessage('Sale deleted successfully!', 'success');
+                            renderSalesList();
+                        } catch (error) {
+                            console.error("Error deleting sale:", error);
+                            showFlashMessage('Error deleting sale. Please try again.', 'error');
+                        }
+                        closeConfirmModal();
+                    };
+                }
+                
+                // Store the action function
+                window.currentConfirmAction = actionFunction;
+                confirmModal.classList.remove('hidden');
+            }
+            
+            function closeConfirmModal() {
+                document.getElementById('confirm-modal').classList.add('hidden');
+                window.currentConfirmAction = null;
+            }
+            
+            function executeConfirmAction() {
+                if (window.currentConfirmAction) {
+                    window.currentConfirmAction();
+                }
+                closeConfirmModal();
+            }
+            
+            // Form Handlers
+            async function handleAddSaleSubmit(event) {
+                event.preventDefault();
+                
+                try {
+                    const date = document.getElementById('new-sale-date').value;
+                    const merchantName = document.getElementById('new-merchant-name').value;
+                    const pricePerKg = parseFloat(document.getElementById('new-overall-price-per-kg').value);
+                    const wastageWeight = parseFloat(document.getElementById('new-wastage-weight-kg').value) || 0;
+                    
+                    // Validate required fields
+                    if (!date || !merchantName || isNaN(pricePerKg) || pricePerKg <= 0) {
+                        showFlashMessage('Please fill all required fields with valid values.', 'error');
+                        return;
+                    }
+                    
+                    // Get products
+                    const productRows = document.querySelectorAll('#new-products-container .product-row');
+                    const products = [];
+                    let totalGrossWeight = 0;
+                    let totalQuantity = 0;
+                    
+                    for (const row of productRows) {
+                        const bananaType = row.querySelector('select[name="banana_type[]"]').value;
+                        const weight = parseFloat(row.querySelector('input[name="weight_kg[]"]').value) || 0;
+                        const quantity = parseInt(row.querySelector('input[name="quantity[]"]').value) || 0;
+                        
+                        if (!bananaType || weight <= 0 || quantity <= 0) {
+                            showFlashMessage('Please fill all product fields with valid positive values.', 'error');
+                            return;
+                        }
+                        
+                        products.push({ bananaType, weightKg: weight, quantity });
+                        totalGrossWeight += weight;
+                        totalQuantity += quantity;
+                    }
+                    
+                    if (products.length === 0) {
+                        showFlashMessage('Please add at least one product.', 'error');
+                        return;
+                    }
+                    
+                    // Calculate totals
+                    const netWeight = Math.max(0, totalGrossWeight - wastageWeight);
+                    const totalAmount = netWeight * pricePerKg;
+                    
+                    // Get next bill number
+                    const nextBillNumber = await getAndIncrementBillNumber();
+                    if (!nextBillNumber) {
+                        showFlashMessage('Error generating bill number. Please try again.', 'error');
+                        return;
+                    }
+                    
+                    // Create sale object
+                    const newSale = {
+                        billNumber: `BILL-${nextBillNumber.toString().padStart(4, '0')}`,
+                        date,
+                        merchantName,
+                        products,
+                        totalWeightKg: totalGrossWeight,
+                        wastageWeightKg: wastageWeight,
+                        netWeightKg: netWeight,
+                        totalQuantity,
+                        overallPricePerKg: pricePerKg,
+                        totalAmount,
+                        amountReceived: 0,
+                        balanceDue: totalAmount,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    
+                    // Save to Firestore
+                    await salesCollection.add(newSale);
+                    
+                    // Update merchant record if needed
+                    await updateMerchantRecord(merchantName);
+                    
+                    showFlashMessage('Sale added successfully!', 'success');
+                    closeAddSaleModal();
+                    renderSalesList();
+                    
+                } catch (error) {
+                    console.error("Error adding sale:", error);
+                    showFlashMessage('Error adding sale. Please try again.', 'error');
+                }
+            }
+            
+            async function handleEditSaleSubmit(event) {
+                event.preventDefault();
+                
+                try {
+                    const saleId = document.getElementById('edit-sale-id').value;
+                    const date = document.getElementById('edit-sale-date').value;
+                    const merchantName = document.getElementById('edit-merchant-name').value;
+                    const pricePerKg = parseFloat(document.getElementById('edit-overall-price-per-kg').value);
+                    const wastageWeight = parseFloat(document.getElementById('edit-wastage-weight-kg').value) || 0;
+                                        if (!saleId || !date || !merchantName || isNaN(pricePerKg) || pricePerKg <= 0) {
+                        showFlashMessage('Please fill all required fields with valid values.', 'error');
+                        return;
+                    }
+                    
+                    // Get products
+                    const productRows = document.querySelectorAll('#edit-products-container .product-row');
+                    const products = [];
+                    let totalGrossWeight = 0;
+                    let totalQuantity = 0;
+                    
+                    for (const row of productRows) {
+                        const bananaType = row.querySelector('select[name="banana_type[]"]').value;
+                        const weight = parseFloat(row.querySelector('input[name="weight_kg[]"]').value) || 0;
+                        const quantity = parseInt(row.querySelector('input[name="quantity[]"]').value) || 0;
+                        
+                        if (!bananaType || weight <= 0 || quantity <= 0) {
+                            showFlashMessage('Please fill all product fields with valid positive values.', 'error');
+                            return;
+                        }
+                        
+                        products.push({ bananaType, weightKg: weight, quantity });
+                        totalGrossWeight += weight;
+                        totalQuantity += quantity;
+                    }
+                    
+                    if (products.length === 0) {
+                        showFlashMessage('Please add at least one product.', 'error');
+                        return;
+                    }
+                    
+                    // Calculate totals
+                    const netWeight = Math.max(0, totalGrossWeight - wastageWeight);
+                    const totalAmount = netWeight * pricePerKg;
+                    
+                    // Get existing sale to preserve payment info
+                    const docRef = salesCollection.doc(saleId);
+                    const docSnap = await docRef.get();
+                    
+                    if (!docSnap.exists) {
+                        showFlashMessage('Sale not found for updating.', 'error');
+                        return;
+                    }
+                    
+                    const existingSale = docSnap.data();
+                    const balanceDue = totalAmount - existingSale.amountReceived;
+                    
+                    // Update sale object
+                    const updatedSale = {
+                        date,
+                        merchantName,
+                        products,
+                        totalWeightKg: totalGrossWeight,
+                        wastageWeightKg: wastageWeight,
+                        netWeightKg: netWeight,
+                        totalQuantity,
+                        overallPricePerKg: pricePerKg,
+                        totalAmount,
+                        balanceDue,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    
+                    // Update in Firestore
+                    await docRef.update(updatedSale);
+                    
+                    // Update merchant record if merchant changed
+                    if (existingSale.merchantName !== merchantName) {
+                        await updateMerchantRecord(merchantName);
+                    }
+                    
+                    showFlashMessage('Sale updated successfully!', 'success');
+                    closeEditSaleModal();
+                    renderSalesList();
+                    
+                } catch (error) {
+                    console.error("Error updating sale:", error);
+                    showFlashMessage('Error updating sale. Please try again.', 'error');
+                }
+            }
+            
+            async function handlePaymentSubmit(event) {
+                event.preventDefault();
+                
+                try {
+                    const saleId = document.getElementById('payment-sale-id').value;
+                    const paymentAmount = parseFloat(document.getElementById('payment-amount-input').value);
+                    
+                    if (!saleId || isNaN(paymentAmount) || paymentAmount <= 0) {
+                        showFlashMessage('Please enter a valid payment amount.', 'error');
+                        return;
+                    }
+                    
+                    const docRef = salesCollection.doc(saleId);
+                    const docSnap = await docRef.get();
+                    
+                    if (!docSnap.exists) {
+                        showFlashMessage('Sale not found for payment.', 'error');
+                        return;
+                    }
+                    
+                    const sale = docSnap.data();
+                    
+                    // Validate payment amount
+                    if (paymentAmount > sale.balanceDue) {
+                        showFlashMessage('Payment amount cannot be more than the balance due.', 'error');
+                        return;
+                    }
+                    
+                    // Calculate new amounts
+                    const newAmountReceived = sale.amountReceived + paymentAmount;
+                    const newBalanceDue = sale.totalAmount - newAmountReceived;
+                    
+                    // Update sale
+                    await docRef.update({
+                        amountReceived: newAmountReceived,
+                        balanceDue: newBalanceDue,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    showFlashMessage('Payment recorded successfully!', 'success');
+                    closePaymentModal();
+                    renderSalesList();
+                    
+                } catch (error) {
+                    console.error("Error recording payment:", error);
+                    showFlashMessage('Error recording payment. Please try again.', 'error');
+                }
+            }
+            
+            // Merchant Functions
+            async function updateMerchantRecord(merchantName) {
+                try {
+                    if (!merchantName) return;
+                    
+                    // Check if merchant exists
+                    const snapshot = await merchantsCollection
+                        .where('name', '==', merchantName)
+                        .limit(1)
+                        .get();
+                    
+                    if (snapshot.empty) {
+                        // Create new merchant
+                        await merchantsCollection.add({
+                            name: merchantName,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                    
+                } catch (error) {
+                    console.error("Error updating merchant record:", error);
+                }
+            }
+            
+            // Bill Number Functions
+            async function getAndIncrementBillNumber() {
+                try {
+                    // Use a transaction to safely increment the bill number
+                    const result = await db.runTransaction(async (transaction) => {
+                        const doc = await transaction.get(billCounterDocRef);
+                        
+                        let nextNumber = 1;
+                        if (doc.exists) {
+                            nextNumber = doc.data().value + 1;
+                        }
+                        
+                        transaction.set(billCounterDocRef, { value: nextNumber }, { merge: true });
+                        return nextNumber;
+                    });
+                    
+                    return result;
+                    
+                } catch (error) {
+                    console.error("Error getting/incrementing bill number:", error);
+                    return null;
+                }
+            }
+            
+            // Sales List Functions
+            async function renderSalesList(searchTerm = '') {
+                try {
+                    const salesTableBody = document.getElementById('sales-table-body');
+                    salesTableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center"><div class="flex justify-center"><div class="loading-spinner h-8 w-8 border-4 border-green-500 border-t-transparent rounded-full"></div></div></td></tr>';
+                    
+                    let query = salesCollection.orderBy('createdAt', 'desc');
+                    
+                    if (searchTerm) {
+                        query = query.where('merchantName', '>=', searchTerm)
+                                    .where('merchantName', '<=', searchTerm + '\uf8ff');
+                    }
+                    
+                    // Get total count for pagination
+                    const countQuery = await query.count().get();
+                    totalRecords = countQuery.data().count;
+                    
+                    // Apply pagination
+                    const startAfter = (currentPage - 1) * PAGE_SIZE;
+                    const snapshot = await query.limit(PAGE_SIZE).offset(startAfter).get();
+                    
+                    if (snapshot.empty) {
+                        salesTableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No sales records found</td></tr>';
+                        updatePaginationControls();
+                        updateSummaryStats();
+                        return;
+                    }
+                    
+                    salesTableBody.innerHTML = '';
+                    
+                    snapshot.forEach(doc => {
+                        const sale = doc.data();
+                        const row = document.createElement('tr');
+                        row.className = 'hover:bg-gray-50';
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sale.billNumber}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.date}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${sale.merchantName}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${(sale.netWeightKg || 0).toFixed(2)} kg</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹${sale.totalAmount.toFixed(2)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    ${sale.balanceDue <= 0 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                    ${sale.balanceDue <= 0 ? 'Paid' : 'Pending ₹' + sale.balanceDue.toFixed(2)}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                <button onclick="BananaSalesApp.openBillModal('${doc.id}')" class="text-blue-600 hover:text-blue-900">
+                                    <i class="fas fa-file-invoice"></i>
+                                </button>
+                                <button onclick="BananaSalesApp.openEditModal('${doc.id}')" class="text-indigo-600 hover:text-indigo-900">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="BananaSalesApp.openPaymentModal('${doc.id}')" class="text-green-600 hover:text-green-900">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </button>
+                                <button onclick="BananaSalesApp.openConfirmModal('delete', '${doc.id}')" class="text-red-600 hover:text-red-900">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        `;
+                        salesTableBody.appendChild(row);
+                    });
+                    
+                    updatePaginationControls();
+                    updateSummaryStats();
+                    
+                } catch (error) {
+                    console.error("Error loading sales:", error);
+                    salesTableBody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">Error loading sales data</td></tr>';
+                    showFlashMessage('Error loading sales data. Please try again.', 'error');
+                }
+            }
+            
+            function updatePaginationControls() {
+                document.getElementById('showing-from').textContent = ((currentPage - 1) * PAGE_SIZE + 1).toString();
+                document.getElementById('showing-to').textContent = Math.min(currentPage * PAGE_SIZE, totalRecords).toString();
+                document.getElementById('total-records').textContent = totalRecords.toString();
+                
+                document.getElementById('prev-page-btn').disabled = currentPage <= 1;
+                document.getElementById('next-page-btn').disabled = currentPage * PAGE_SIZE >= totalRecords;
+            }
+            
+            async function updateSummaryStats() {
+                try {
+                    // Total Sales
+                    const totalSalesQuery = await salesCollection
+                        .select('totalAmount')
+                        .get();
+                    
+                    let totalSales = 0;
+                    totalSalesQuery.forEach(doc => {
+                        totalSales += doc.data().totalAmount;
+                    });
+                    
+                    // Total Received
+                    const totalReceivedQuery = await salesCollection
+                        .select('amountReceived')
+                        .get();
+                    
+                    let totalReceived = 0;
+                    totalReceivedQuery.forEach(doc => {
+                        totalReceived += doc.data().amountReceived;
+                    });
+                    
+                    // Update UI
+                    document.getElementById('total-sales-amount').textContent = '₹' + totalSales.toFixed(2);
+                    document.getElementById('total-amount-received').textContent = '₹' + totalReceived.toFixed(2);
+                    document.getElementById('total-outstanding').textContent = '₹' + (totalSales - totalReceived).toFixed(2);
+                    
+                } catch (error) {
+                    console.error("Error updating summary stats:", error);
+                }
+            }
+            
+            // Search and Pagination
+            function handleSearch(event) {
+                const searchTerm = event.target.value.trim();
+                currentPage = 1;
+                renderSalesList(searchTerm);
+            }
+            
+            function goToPrevPage() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderSalesList(document.getElementById('search-sales').value.trim());
+                }
+            }
+            
+            function goToNextPage() {
+                if (currentPage * PAGE_SIZE < totalRecords) {
+                    currentPage++;
+                    renderSalesList(document.getElementById('search-sales').value.trim());
+                }
+            }
+            
+            // Data Refresh
+            function refreshData() {
+                currentPage = 1;
+                document.getElementById('search-sales').value = '';
                 renderSalesList();
-
-            } catch (error) {
-                console.error("Error updating payment: ", error);
-                showFlashMessage('Error updating payment. Please try again.', 'error');
+                updateChartData(currentChartRange);
+                showFlashMessage('Data refreshed successfully!', 'success');
             }
+            
+            // Public API
+            return {
+                init,
+                updateNewTotals,
+                updateEditTotals,
+                addNewProductRow,
+                removeNewProductRow,
+                addEditProductRow,
+                removeEditProductRow,
+                openAddSaleModal,
+                openEditModal,
+                openPaymentModal,
+                openBillModal,
+                openConfirmModal,
+                printBill
+            };
+        })();
+        
+        // Initialize the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            BananaSalesApp.init();
+            
+            // Initialize chart with month view by default
+            setTimeout(() => {
+                BananaSalesApp.updateChartData('month');
+            }, 500);
         });
-
-        // Bill View Modal
-        document.getElementById('close-bill-btn').addEventListener('click', () => {
-            document.getElementById('bill-view-modal').classList.add('hidden');
-        });
-
-        // Modified print bill function
-        document.getElementById('print-bill-btn').addEventListener('click', () => {
-            const billContent = document.getElementById('bill-content').innerHTML;
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Print Bill</title>
-                    <link href="https://cdn.tailwindcss.com" rel="stylesheet">
-                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-                    <style>
-                        body {
-                            font-family: 'Inter', sans-serif;
-                            margin: 0;
-                            padding: 20px;
-                            color: #374151;
-                        }
-                        /* Ensure the bill content is visible and styled for printing */
-                        #bill-content {
-                            width: 100%;
-                            box-sizing: border-box;
-                        }
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                        }
-                        th, td {
-                            border: 1px solid #e5e7eb; /* gray-300 */
-                            padding: 8px 16px;
-                            text-align: left;
-                        }
-                        th {
-                            background-color: #f3f4f6; /* gray-100 */
-                            font-weight: 600;
-                            color: #4b5563; /* gray-700 */
-                        }
-                        .text-right { text-align: right; }
-                        .font-bold { font-weight: 700; }
-                        .text-green-700 { color: #047857; }
-                        .text-blue-700 { color: #1d4ed8; }
-                        .text-red-600 { color: #dc2626; }
-                    </style>
-                </head>
-                <body>
-                    ${billContent}
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
-            // No need to reload the main window, as its DOM was not affected
-        });
-
-
-        // Confirmation Modal (for Delete)
-        document.getElementById('cancel-confirm-btn').addEventListener('click', () => {
-            document.getElementById('confirm-modal').classList.add('hidden');
-            currentConfirmAction = null;
-        });
-        document.getElementById('execute-confirm-btn').addEventListener('click', () => {
-            if (currentConfirmAction) {
-                currentConfirmAction();
-            }
-        });
-
-    }); // End of DOMContentLoaded
-</script>
+    </script>
+</body>
+</html>
