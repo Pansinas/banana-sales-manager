@@ -1380,8 +1380,7 @@
             });
         }
 
-        // Initialize local storage
-        salesData = loadSalesData();
+        // Sales data will be loaded asynchronously in initializeApp()
         
         let userId = 'local-user'; // Local user identifier
 
@@ -1953,13 +1952,13 @@
                         <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-bold ${sale.balanceDue > 0 ? 'text-red-600' : 'text-green-600'}">₹${sale.balanceDue.toFixed(2)}</td>
                         <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                                <button onclick="openEditModal('${sale.id}')" class="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-xs sm:text-sm">
+                                <button onclick="editSale('${sale.id}')" class="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-xs sm:text-sm">
                                     Edit
                                 </button>
-                                <button onclick="openPaymentModal('${sale.id}')" class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs sm:text-sm">
+                                <button onclick="payForSale('${sale.id}')" class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs sm:text-sm">
                                     Payment
                                 </button>
-                                <button onclick="openBillModal('${sale.id}')" class="px-3 py-1 bg-purple-500 text-white rounded-md hover:bg-purple-600 text-xs sm:text-sm">
+                                <button onclick="viewBill('${sale.id}')" class="px-3 py-1 bg-purple-500 text-white rounded-md hover:bg-purple-600 text-xs sm:text-sm">
                                     Bill
                                 </button>
                                 <button onclick="openConfirmModal('delete', '${sale.id}')" class="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-xs sm:text-sm">
@@ -2007,6 +2006,30 @@
             renderSalesList(true).catch(error => {
                 console.error('Error refreshing sales list:', error);
                 showFlashMessage('Error loading sales data', 'error');
+            });
+        }
+        
+        // Wrapper function for edit modal onclick handler
+        function editSale(saleId) {
+            openEditModal(saleId).catch(error => {
+                console.error('Error opening edit modal:', error);
+                showFlashMessage('Error loading sale for editing', 'error');
+            });
+        }
+        
+        // Wrapper function for payment modal onclick handler
+        function payForSale(saleId) {
+            openPaymentModal(saleId).catch(error => {
+                console.error('Error opening payment modal:', error);
+                showFlashMessage('Error loading sale for payment', 'error');
+            });
+        }
+        
+        // Wrapper function for bill modal onclick handler
+        function viewBill(saleId) {
+            openBillModal(saleId).catch(error => {
+                console.error('Error opening bill modal:', error);
+                showFlashMessage('Error loading sale for bill view', 'error');
             });
         }
         
@@ -2264,10 +2287,10 @@
                 
                 try {
                     // Add to local storage
-                    const currentSales = loadSalesData();
+                    const currentSales = await loadSalesData();
                     newSale.id = Date.now().toString(); // Generate simple ID
                     currentSales.push(newSale);
-                    saveSalesData(currentSales);
+                    await saveSalesData(currentSales);
                     
                     showFlashMessage('Sale added successfully!', 'success');
                     clearDraft('add-sale-form'); // Clear saved draft
@@ -2388,10 +2411,10 @@
         document.getElementById('add-edit-product-row-btn').addEventListener('click', addEditProductRow);
         document.getElementById('edit-overall-price-per-kg').addEventListener('input', updateEditTotals);
 
-        function openEditModal(saleId) {
+        async function openEditModal(saleId) {
             try {
                 // Load sales data from local storage
-                const currentSales = loadSalesData();
+                const currentSales = await loadSalesData();
                 const saleToEdit = currentSales.find(sale => sale.id === saleId);
 
                 if (!saleToEdit) {
@@ -2485,7 +2508,7 @@
                 
                 try {
                     // Find current sale in local storage
-                    const currentSales = loadSalesData();
+                    const currentSales = await loadSalesData();
                     const currentSaleIndex = currentSales.findIndex(sale => sale.id === saleId);
                     
                     if (currentSaleIndex === -1) {
@@ -2526,7 +2549,7 @@
                     
                     // Update local storage
                     currentSales[currentSaleIndex] = { ...currentSales[currentSaleIndex], ...updateData };
-                    saveSalesData(currentSales);
+                    await saveSalesData(currentSales);
                     
                     showFlashMessage('Sale updated successfully!', 'success');
                     document.getElementById('edit-sale-modal').classList.add('hidden');
@@ -2551,10 +2574,10 @@
         });
 
         // --- Payment Modal Logic ---
-        function openPaymentModal(saleId) {
+        async function openPaymentModal(saleId) {
             try {
                 // Load sales data from local storage
-                const currentSales = loadSalesData();
+                const currentSales = await loadSalesData();
                 const saleToPay = currentSales.find(sale => sale.id === saleId);
 
                 if (!saleToPay) {
@@ -2594,7 +2617,7 @@
                 }
 
                 // Load current sales data from local storage
-                const currentSales = loadSalesData();
+                const currentSales = await loadSalesData();
                 const saleIndex = currentSales.findIndex(sale => sale.id === saleId);
                 
                 if (saleIndex === -1) {
@@ -2616,7 +2639,7 @@
                     balanceDue: newBalanceDue
                 };
                 
-                saveSalesData(currentSales);
+                await saveSalesData(currentSales);
 
                 showFlashMessage('Payment recorded successfully!', 'success');
                 document.getElementById('payment-modal').classList.add('hidden');
@@ -2629,10 +2652,10 @@
         });
 
         // --- Bill View Modal Logic ---
-        function openBillModal(saleId) {
+        async function openBillModal(saleId) {
             try {
                 // Load sales data from local storage
-                const currentSales = loadSalesData();
+                const currentSales = await loadSalesData();
                 const saleToView = currentSales.find(sale => sale.id === saleId);
 
                 if (!saleToView) {
@@ -2802,7 +2825,7 @@
                         deleteSale(id);
                         break;
                     case 'open-payment':
-                        openPaymentModal(id);
+                        payForSale(id);
                         break;
                 }
             });
