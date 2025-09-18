@@ -600,6 +600,128 @@
             background: linear-gradient(135deg, var(--danger-color) 0%, var(--danger-hover) 100%);
         }
 
+        /* Print Styles for Bills */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            
+            #bill-view-modal, #bill-view-modal * {
+                visibility: visible;
+            }
+            
+            #bill-view-modal {
+                position: static !important;
+                background: white !important;
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                height: auto !important;
+                max-width: none !important;
+                max-height: none !important;
+            }
+            
+            .modal-overlay {
+                position: static !important;
+                background: transparent !important;
+                backdrop-filter: none !important;
+            }
+            
+            .modal-content {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 20px !important;
+                background: white !important;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .print-header {
+                text-align: center;
+                margin-bottom: 30px;
+                border-bottom: 2px solid #000;
+                padding-bottom: 20px;
+            }
+            
+            .print-company-name {
+                font-size: 24px;
+                font-weight: bold;
+                color: #000;
+                margin-bottom: 5px;
+            }
+            
+            .print-company-details {
+                font-size: 12px;
+                color: #666;
+                line-height: 1.4;
+            }
+            
+            .print-bill-title {
+                font-size: 20px;
+                font-weight: bold;
+                text-align: center;
+                margin: 20px 0;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+            
+            .print-bill-info {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 20px;
+                font-size: 12px;
+            }
+            
+            .print-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 20px;
+                font-size: 11px;
+            }
+            
+            .print-table th,
+            .print-table td {
+                border: 1px solid #000;
+                padding: 8px;
+                text-align: left;
+            }
+            
+            .print-table th {
+                background-color: #f0f0f0;
+                font-weight: bold;
+                text-align: center;
+            }
+            
+            .print-table .text-right {
+                text-align: right;
+            }
+            
+            .print-totals {
+                margin-top: 20px;
+                border-top: 2px solid #000;
+                padding-top: 10px;
+            }
+            
+            .print-footer {
+                margin-top: 40px;
+                text-align: center;
+                font-size: 10px;
+                border-top: 1px solid #ccc;
+                padding-top: 20px;
+            }
+            
+            .print-signature {
+                margin-top: 50px;
+                text-align: right;
+                font-size: 12px;
+            }
+        }
+
         /* Enhanced Table Styles */
         .table-container {
             background: var(--bg-primary);
@@ -607,6 +729,30 @@
             box-shadow: var(--shadow-md);
             border: 1px solid var(--border-color-light);
             overflow: hidden;
+        }
+        
+        /* Table overflow handling */
+        #sales-list-container {
+            overflow-x: auto;
+            width: 100%;
+        }
+        
+        .min-w-full {
+            min-width: 100%;
+            width: max-content;
+        }
+        
+        /* Ensure action buttons are always visible */
+        .table tbody tr td:last-child {
+            position: sticky;
+            right: 0;
+            background: inherit;
+            z-index: 1;
+            min-width: 280px;
+        }
+        
+        .table tbody tr:hover td:last-child {
+            background: inherit;
         }
         
         [data-theme="light"] .table-container {
@@ -743,6 +889,210 @@
             50% { opacity: 0.5; }
         }
 
+        /* Utility Classes */
+        .flex {
+            display: flex;
+        }
+        
+        .flex-col {
+            flex-direction: column;
+        }
+        
+        .flex-row {
+            flex-direction: row;
+        }
+        
+        .justify-between {
+            justify-content: space-between;
+        }
+        
+        .items-center {
+            align-items: center;
+        }
+        
+        .items-start {
+            align-items: flex-start;
+        }
+        
+        .gap-3 {
+            gap: 0.75rem;
+        }
+        
+        .gap-4 {
+            gap: 1rem;
+        }
+        
+        .w-full {
+            width: 100%;
+        }
+        
+        .w-auto {
+            width: auto;
+        }
+        
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+        
+        .whitespace-nowrap {
+            white-space: nowrap;
+        }
+        
+        .text-xs {
+            font-size: 0.75rem;
+        }
+        
+        .text-sm {
+            font-size: 0.875rem;
+        }
+        
+        .font-medium {
+            font-weight: 500;
+        }
+        
+        .font-semibold {
+            font-weight: 600;
+        }
+        
+        .font-bold {
+            font-weight: 700;
+        }
+        
+        .uppercase {
+            text-transform: uppercase;
+        }
+        
+        .tracking-wider {
+            letter-spacing: 0.05em;
+        }
+        
+        .text-left {
+            text-align: left;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .divide-y > * + * {
+            border-top: 1px solid var(--gray-200);
+        }
+        
+        .divide-gray-200 > * + * {
+            border-color: var(--gray-200);
+        }
+        
+        .bg-white {
+            background-color: white;
+        }
+        
+        .bg-gray-50 {
+            background-color: var(--gray-50);
+        }
+        
+        .bg-green-100 {
+            background-color: var(--primary-light);
+        }
+        
+        .text-gray-500 {
+            color: var(--gray-500);
+        }
+        
+        .text-gray-600 {
+            color: var(--gray-600);
+        }
+        
+        .text-gray-700 {
+            color: var(--gray-700);
+        }
+        
+        .text-gray-900 {
+            color: var(--gray-900);
+        }
+        
+        .text-blue-600 {
+            color: var(--secondary-color);
+        }
+        
+        .text-red-600 {
+            color: var(--danger-color);
+        }
+        
+        .text-green-600 {
+            color: var(--primary-color);
+        }
+        
+        .hover\:bg-gray-50:hover {
+            background-color: var(--gray-50);
+        }
+        
+        .px-3 {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
+        
+        .px-4 {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        
+        .px-6 {
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+        
+        .py-1 {
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+        }
+        
+        .py-2 {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+        
+        .py-3 {
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+        }
+        
+        .py-4 {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+        
+        .space-x-2 > * + * {
+            margin-left: 0.5rem;
+        }
+        
+        .space-y-2 > * + * {
+            margin-top: 0.5rem;
+        }
+        
+        .rounded-md {
+            border-radius: 0.375rem;
+        }
+        
+        .rounded-lg {
+            border-radius: 0.5rem;
+        }
+        
+        .overflow-hidden {
+            overflow: hidden;
+        }
+        
+        .relative {
+            position: relative;
+        }
+        
+        .hidden {
+            display: none;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .modal-content {
@@ -763,6 +1113,55 @@
             .table th, .table td {
                 padding: 0.75rem 0.5rem;
                 font-size: 0.8125rem;
+            }
+            
+            .sm\:flex-row {
+                flex-direction: row;
+            }
+            
+            .sm\:items-center {
+                align-items: center;
+            }
+            
+            .sm\:w-auto {
+                width: auto;
+            }
+            
+            .sm\:space-y-0 > * + * {
+                margin-top: 0;
+            }
+            
+            .sm\:space-x-2 > * + * {
+                margin-left: 0.5rem;
+            }
+            
+            .sm\:px-6 {
+                padding-left: 1.5rem;
+                padding-right: 1.5rem;
+            }
+            
+            .sm\:py-3 {
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+            }
+            
+            .sm\:py-4 {
+                padding-top: 1rem;
+                padding-bottom: 1rem;
+            }
+            
+            .sm\:text-sm {
+                font-size: 0.875rem;
+            }
+            
+            /* Ensure action buttons remain accessible on mobile */
+            .table tbody tr td:last-child {
+                min-width: 240px;
+            }
+            
+            .table tbody tr td:last-child .flex {
+                flex-direction: column;
+                gap: 0.5rem;
             }
         }
 
@@ -864,7 +1263,50 @@
 
                 <div class="table-container">
                         <div style="padding: 1.5rem 2rem 1rem; border-bottom: 1px solid var(--gray-200);">
-                            <h2 style="font-size: 1.5rem; font-weight: 600; color: var(--gray-700); margin: 0;" id="sales-table-title">📊 All Sales Records</h2>
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                                <h2 style="font-size: 1.5rem; font-weight: 600; color: var(--gray-700); margin: 0;" id="sales-table-title">📊 All Sales Records</h2>
+                                <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                                    <!-- Search Bar -->
+                                    <div class="relative">
+                                        <input 
+                                            type="text" 
+                                            id="sales-search" 
+                                            placeholder="🔍 Search by bill #, merchant, or date..."
+                                            class="pl-4 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent w-full sm:w-80"
+                                        />
+                                        <button 
+                                            id="clear-search" 
+                                            class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden"
+                                            title="Clear search"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Filter Dropdown -->
+                                    <select 
+                                        id="payment-status-filter" 
+                                        class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    >
+                                        <option value="all">All Payments</option>
+                                        <option value="paid">Paid</option>
+                                        <option value="partial">Partially Paid</option>
+                                        <option value="unpaid">Unpaid</option>
+                                    </select>
+                                    
+                                    <!-- Date Range Filter -->
+                                    <select 
+                                        id="date-range-filter" 
+                                        class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    >
+                                        <option value="all">All Dates</option>
+                                        <option value="today">Today</option>
+                                        <option value="week">This Week</option>
+                                        <option value="month">This Month</option>
+                                        <option value="year">This Year</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     <div id="sales-list-container" style="padding: 1.5rem; min-height: 200px;">
                         <div class="loading" style="justify-content: center; padding: 2rem;">
@@ -928,11 +1370,27 @@
                     <div class="totals-summary">
                         <div class="total-item">
                             <label class="form-label">Total Weight (kg)</label>
-                            <p id="new-total-weight" class="total-value">0.00 kg</p>
+                            <p id="new-total-weight" class="total-value font-bold text-green-600">0.00 kg</p>
                         </div>
                         <div class="total-item">
                             <label class="form-label">Total Quantity</label>
                             <p id="new-total-quantity" class="total-value">0</p>
+                        </div>
+                        <div class="total-item">
+                            <label for="new-final-wastage" class="form-label">Final Wastage (kg)</label>
+                            <input
+                                type="number"
+                                id="new-final-wastage"
+                                placeholder="0.00"
+                                step="0.01"
+                                min="0"
+                                class="form-input text-center"
+                                oninput="updateNewTotals()"
+                            />
+                        </div>
+                        <div class="total-item">
+                            <label class="form-label">Net Weight (kg)</label>
+                            <p id="new-net-weight" class="total-value font-bold text-blue-600">0.00 kg</p>
                         </div>
                         <div class="total-item">
                             <label class="form-label">Total Amount Due (₹)</label>
@@ -1004,11 +1462,27 @@
                     <div class="totals-summary">
                         <div class="total-item">
                             <label class="form-label">Total Weight (kg)</label>
-                            <p id="edit-total-weight" class="total-value">0.00 kg</p>
+                            <p id="edit-total-weight" class="total-value font-bold text-green-600">0.00 kg</p>
                         </div>
                         <div class="total-item">
                             <label class="form-label">Total Quantity</label>
                             <p id="edit-total-quantity" class="total-value">0</p>
+                        </div>
+                        <div class="total-item">
+                            <label for="edit-final-wastage" class="form-label">Final Wastage (kg)</label>
+                            <input
+                                type="number"
+                                id="edit-final-wastage"
+                                placeholder="0.00"
+                                step="0.01"
+                                min="0"
+                                class="form-input text-center"
+                                oninput="updateEditTotals()"
+                            />
+                        </div>
+                        <div class="total-item">
+                            <label class="form-label">Net Weight (kg)</label>
+                            <p id="edit-net-weight" class="total-value font-bold text-blue-600">0.00 kg</p>
                         </div>
                         <div class="total-item">
                             <label class="form-label">New Total Amount Due (₹)</label>
@@ -1080,20 +1554,55 @@
         <div id="bill-view-modal" class="modal-overlay hidden">
             <div class="modal-content max-w-2xl">
                 <div id="bill-content" class="p-4 border border-gray-300 rounded-md">
-                    <h2 class="text-2xl font-bold text-center text-green-800 mb-4">Banana Sales Bill</h2>
-                    <div class="mb-4 text-sm">
-                        <p><strong>Bill Number:</strong> <span id="bill-bill-number"></span></p>
-                        <p><strong>Date:</strong> <span id="bill-date"></span></p>
-                        <p><strong>Seller:</strong> Your Father's Business Name (e.g., "Green Harvest Bananas")</p>
-                        <p><strong>Address:</strong> Your Business Address</p>
-                        <p><strong>Contact:</strong> Your Contact Number</p>
+                    <!-- Print Header -->
+                    <div class="print-header">
+                        <div class="print-company-name">🍌 Banana Sales Manager</div>
+                        <div class="print-company-details">
+                            Professional Banana Trading & Distribution<br>
+                            Contact: +91-XXXXXXXXXX | Email: sales@bananasales.com<br>
+                            Address: Your Business Address Here
+                        </div>
                     </div>
-                    <div class="mb-6">
+                    
+                    <!-- Screen Header -->
+                    <h2 class="text-2xl font-bold text-center text-green-800 mb-4 no-print">Banana Sales Bill</h2>
+                    
+                    <!-- Print Bill Title -->
+                    <div class="print-bill-title">Sales Invoice</div>
+                    
+                    <!-- Bill Information -->
+                    <div class="print-bill-info">
+                        <div>
+                            <strong>Bill Number:</strong> <span id="bill-bill-number"></span><br>
+                            <strong>Date:</strong> <span id="bill-date"></span>
+                        </div>
+                        <div>
+                            <strong>Bill To:</strong><br>
+                            <span id="bill-merchant-name" class="font-bold"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Enhanced screen display with status -->
+                    <div class="mb-4 text-sm no-print bg-gray-50 p-4 rounded-lg">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p><strong>Bill Number:</strong> <span class="bill-bill-number-screen font-mono"></span></p>
+                                <p><strong>Date:</strong> <span class="bill-date-screen"></span></p>
+                                <p><strong>Payment Status:</strong> <span id="bill-payment-status" class="font-semibold"></span></p>
+                            </div>
+                            <div>
+                                <p><strong>Seller:</strong> Banana Sales Manager</p>
+                                <p><strong>Contact:</strong> +91-XXXXXXXXXX</p>
+                                <p><strong>Total Items:</strong> <span id="bill-total-items"></span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-6 no-print">
                         <p class="text-lg font-semibold mb-2">Bill To:</p>
-                        <p class="text-xl font-bold text-gray-800" id="bill-merchant-name"></p>
+                        <p class="text-xl font-bold text-gray-800 bill-merchant-name-screen"></p>
                     </div>
 
-                    <table class="min-w-full mb-6 border-collapse border border-gray-300">
+                    <table class="min-w-full mb-6 border-collapse border border-gray-300 print-table">
                         <thead>
                             <tr class="bg-gray-100">
                                 <th class="border border-gray-300 px-4 py-2 text-left text-sm font-medium text-gray-700">Description (Banana Type)</th>
@@ -1106,8 +1615,16 @@
                             </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Total Weight:</td>
-                                <td class="border border-gray-300 px-4 py-2 text-right font-bold"><span id="bill-total-weight"></span> kg</td>
+                                <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Gross Weight:</td>
+                                <td class="border border-gray-300 px-4 py-2 text-right font-bold"><span id="bill-gross-weight"></span> kg</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Total Wastage:</td>
+                                <td class="border border-gray-300 px-4 py-2 text-right font-bold text-yellow-600"><span id="bill-total-wastage"></span> kg</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Net Weight:</td>
+                                <td class="border border-gray-300 px-4 py-2 text-right font-bold text-green-600"><span id="bill-total-weight"></span> kg</td>
                             </tr>
                             <tr>
                                 <td colspan="3" class="border border-gray-300 px-4 py-2 text-right font-semibold">Total Quantity:</td>
@@ -1131,7 +1648,20 @@
                             </tr>
                         </tfoot>
                     </table>
-                    <div class="text-sm mt-6 text-center">
+                    <!-- Print Footer -->
+                    <div class="print-footer">
+                        <p>Thank you for your business!</p>
+                        <p>For any queries, please contact us at +91-XXXXXXXXXX</p>
+                    </div>
+                    
+                    <!-- Print Signature -->
+                    <div class="print-signature">
+                        <p>_________________________</p>
+                        <p>Authorized Signature</p>
+                    </div>
+                    
+                    <!-- Screen Footer -->
+                    <div class="text-sm mt-6 text-center no-print">
                         <p>Thank you for your business!</p>
                         <p class="mt-4">_________________________</p>
                         <p>Signature</p>
@@ -1608,6 +2138,16 @@
                 validatedData.amountReceived = amountValidation.value;
             }
             
+            // Validate final wastage
+            if (formData.finalWastage !== undefined) {
+                const wastageValidation = validateNumericInput(formData.finalWastage, 'Final wastage', 0, 10000);
+                if (!wastageValidation.valid) {
+                    errors.push(wastageValidation.message);
+                } else {
+                    validatedData.finalWastage = wastageValidation.value;
+                }
+            }
+            
             // Validate products
             if (!formData.products || !Array.isArray(formData.products) || formData.products.length === 0) {
                 errors.push('At least one product is required');
@@ -1625,6 +2165,8 @@
                     if (!weightValidation.valid) {
                         productErrors.push(`Product ${index + 1}: ${weightValidation.message}`);
                     }
+                    
+                    // Wastage validation removed - now handled at final stage
                     
                     const quantityValidation = validateNumericInput(product.quantity, `Product ${index + 1} quantity`, 1, 100000);
                     if (!quantityValidation.valid) {
@@ -1644,6 +2186,14 @@
                 
                 if (validatedProducts.length > 0) {
                     validatedData.products = validatedProducts;
+                    
+                    // Validate that final wastage doesn't exceed total weight
+                    if (validatedData.finalWastage !== undefined && validatedData.finalWastage > 0) {
+                        const totalWeight = validatedProducts.reduce((sum, product) => sum + product.weightKg, 0);
+                        if (validatedData.finalWastage > totalWeight) {
+                            errors.push(`Final wastage (${validatedData.finalWastage} kg) cannot exceed total weight (${totalWeight} kg)`);
+                        }
+                    }
                 }
             }
             
@@ -1883,6 +2433,7 @@
                     sales = [];
                 }
                 sales = sales.sort((a, b) => new Date(b.date) - new Date(a.date));
+                allSalesData = sales; // Store for filtering
                 console.log(`📦 Loaded ${sales.length} sales from local storage`);
                 // Preload optimizations for large datasets
                 if (sales.length > 50) {
@@ -1952,17 +2503,20 @@
                         <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-bold ${sale.balanceDue > 0 ? 'text-red-600' : 'text-green-600'}">₹${sale.balanceDue.toFixed(2)}</td>
                         <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                                <button onclick="editSale('${sale.id}')" class="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-xs sm:text-sm">
-                                    Edit
+                                <button onclick="editSale('${sale.id}')" class="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-xs sm:text-sm" title="Edit Sale">
+                                    ✏️ Edit
                                 </button>
-                                <button onclick="payForSale('${sale.id}')" class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs sm:text-sm">
-                                    Payment
+                                <button onclick="payForSale('${sale.id}')" class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs sm:text-sm" title="Record Payment">
+                                    💰 Payment
                                 </button>
-                                <button onclick="viewBill('${sale.id}')" class="px-3 py-1 bg-purple-500 text-white rounded-md hover:bg-purple-600 text-xs sm:text-sm">
-                                    Bill
+                                <button onclick="viewBill('${sale.id}')" class="px-3 py-1 bg-purple-500 text-white rounded-md hover:bg-purple-600 text-xs sm:text-sm" title="View Bill">
+                                    📄 View
                                 </button>
-                                <button onclick="openConfirmModal('delete', '${sale.id}')" class="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-xs sm:text-sm">
-                                    Delete
+                                <button onclick="printBill('${sale.id}')" class="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 text-xs sm:text-sm" title="Print Bill">
+                                    🖨️ Print
+                                </button>
+                                <button onclick="openConfirmModal('delete', '${sale.id}')" class="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-xs sm:text-sm" title="Delete Sale">
+                                    🗑️ Delete
                                 </button>
                             </div>
                         </td>
@@ -2033,7 +2587,176 @@
             });
         }
         
-        // Enhanced metrics update function
+        // Wrapper function for direct print functionality
+        function printBill(saleId) {
+            openBillModal(saleId).then(() => {
+                // Small delay to ensure modal content is fully rendered
+                setTimeout(() => {
+                    window.print();
+                }, 100);
+            }).catch(error => {
+                console.error('Error opening bill for printing:', error);
+                showFlashMessage('Error loading sale for printing', 'error');
+            });
+        }
+        
+        // Search and Filter functionality
+        let allSalesData = []; // Store all sales for filtering
+        
+        function filterSales(sales, searchTerm, paymentFilter, dateFilter) {
+            return sales.filter(sale => {
+                // Search filter
+                const searchMatch = !searchTerm || 
+                    sale.billNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    sale.merchantName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    sale.date.includes(searchTerm);
+                
+                // Payment status filter
+                let paymentMatch = true;
+                if (paymentFilter !== 'all') {
+                    const isPaid = sale.balanceDue <= 0;
+                    const isPartial = sale.amountReceived > 0 && sale.balanceDue > 0;
+                    const isUnpaid = sale.amountReceived <= 0;
+                    
+                    paymentMatch = (paymentFilter === 'paid' && isPaid) ||
+                                  (paymentFilter === 'partial' && isPartial) ||
+                                  (paymentFilter === 'unpaid' && isUnpaid);
+                }
+                
+                // Date range filter
+                let dateMatch = true;
+                if (dateFilter !== 'all') {
+                    const saleDate = new Date(sale.date);
+                    const today = new Date();
+                    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                    
+                    switch (dateFilter) {
+                        case 'today':
+                            dateMatch = saleDate >= startOfToday;
+                            break;
+                        case 'week':
+                            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                            dateMatch = saleDate >= weekAgo;
+                            break;
+                        case 'month':
+                            const monthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+                            dateMatch = saleDate >= monthAgo;
+                            break;
+                        case 'year':
+                            const yearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+                            dateMatch = saleDate >= yearAgo;
+                            break;
+                    }
+                }
+                
+                return searchMatch && paymentMatch && dateMatch;
+            });
+        }
+        
+        function applyFilters() {
+            const searchTerm = document.getElementById('sales-search').value;
+            const paymentFilter = document.getElementById('payment-status-filter').value;
+            const dateFilter = document.getElementById('date-range-filter').value;
+            
+            const filteredSales = filterSales(allSalesData, searchTerm, paymentFilter, dateFilter);
+            renderFilteredSales(filteredSales);
+            
+            // Show/hide clear search button
+            const clearButton = document.getElementById('clear-search');
+            if (searchTerm) {
+                clearButton.classList.remove('hidden');
+            } else {
+                clearButton.classList.add('hidden');
+            }
+        }
+        
+        function renderFilteredSales(sales) {
+            const salesListContainer = document.getElementById('sales-list-container');
+            
+            if (sales.length === 0) {
+                salesListContainer.innerHTML = '<p class="text-gray-600 text-center py-4">No sales match your search criteria.</p>';
+                return;
+            }
+            
+            // Create table with filtered results
+            const table = document.createElement('table');
+            table.className = 'min-w-full divide-y divide-gray-200';
+            table.innerHTML = `
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider" role="columnheader" scope="col">Bill Number</th>
+                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider" role="columnheader" scope="col">Date</th>
+                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider" role="columnheader" scope="col">Merchant</th>
+                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider" role="columnheader" scope="col">Weight (kg)</th>
+                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider" role="columnheader" scope="col">Quantity</th>
+                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider" role="columnheader" scope="col">Overall Price/kg (₹)</th>
+                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider" role="columnheader" scope="col">Total (₹)</th>
+                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider" role="columnheader" scope="col">Received (₹)</th>
+                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider" role="columnheader" scope="col">Balance (₹)</th>
+                        <th class="px-4 py-2 sm:px-6 sm:py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider" role="columnheader" scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="sales-table-body">
+                </tbody>
+            `;
+            
+            salesListContainer.innerHTML = '';
+            salesListContainer.appendChild(table);
+            
+            const salesTableBody = document.getElementById('sales-table-body');
+            const fragment = document.createDocumentFragment();
+            
+            sales.forEach(sale => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-medium text-gray-900">${sale.billNumber}</td>
+                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.date}</td>
+                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sanitizeInput(sale.merchantName)}</td>
+                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.totalWeightKg.toFixed(2)}</td>
+                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.totalQuantity}</td>
+                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">${sale.overallPricePerKg.toFixed(2)}</td>
+                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">₹${sale.totalAmount.toFixed(2)}</td>
+                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm text-gray-500">₹${sale.amountReceived.toFixed(2)}</td>
+                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-sm font-medium ${
+                        sale.balanceDue > 0 ? 'text-red-600' : 'text-green-600'
+                    }">₹${sale.balanceDue.toFixed(2)}</td>
+                    <td class="px-4 py-2 sm:px-6 sm:py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                            <button onclick="editSale('${sale.id}')" class="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-xs sm:text-sm" title="Edit Sale">
+                                ✏️ Edit
+                            </button>
+                            <button onclick="payForSale('${sale.id}')" class="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-xs sm:text-sm" title="Record Payment">
+                                💰 Payment
+                            </button>
+                            <button onclick="viewBill('${sale.id}')" class="px-3 py-1 bg-purple-500 text-white rounded-md hover:bg-purple-600 text-xs sm:text-sm" title="View Bill">
+                                📄 View
+                            </button>
+                            <button onclick="printBill('${sale.id}')" class="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 text-xs sm:text-sm" title="Print Bill">
+                                🖨️ Print
+                            </button>
+                            <button onclick="openConfirmModal('delete', '${sale.id}')" class="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 text-xs sm:text-sm" title="Delete Sale">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    </td>
+                `;
+                fragment.appendChild(row);
+            });
+            
+            salesTableBody.appendChild(fragment);
+         }
+         
+         // Clear search function
+         function clearSearch() {
+             document.getElementById('sales-search').value = '';
+             document.getElementById('payment-status-filter').value = 'all';
+             document.getElementById('date-range-filter').value = 'all';
+             document.getElementById('clear-search').classList.add('hidden');
+             renderFilteredSales(allSalesData);
+         }
+         
+         // Enhanced metrics update function
         function updateSalesMetrics(totalSales, totalReceived, totalOutstanding) {
             const formatCurrency = (amount) => `₹${amount.toFixed(2)}`;
             
@@ -2165,9 +2888,20 @@
 
             const overallPricePerKgInput = document.getElementById('new-overall-price-per-kg');
             const overallPricePerKg = parseFloat(overallPricePerKgInput.value);
+            
+            // Get wastage amount from final wastage input
+            const wastageInput = document.getElementById('new-final-wastage');
+            const wastageAmount = parseFloat(wastageInput ? wastageInput.value : 0) || 0;
+            
+            // Calculate net weight after wastage
+            const netWeight = totalWeight - wastageAmount;
+            
+            // Update net weight display
+            document.getElementById('new-net-weight').textContent = netWeight.toFixed(2) + ' kg';
+            
             let totalAmountDue = 0;
-            if (!isNaN(totalWeight) && !isNaN(overallPricePerKg)) {
-                totalAmountDue = totalWeight * overallPricePerKg;
+            if (!isNaN(netWeight) && !isNaN(overallPricePerKg) && netWeight > 0) {
+                totalAmountDue = netWeight * overallPricePerKg;
             }
             document.getElementById('new-total-amount-due').textContent = '₹' + totalAmountDue.toFixed(2);
         }
@@ -2237,6 +2971,11 @@
                     });
                 });
                 
+                // Get final wastage amount
+                const finalWastageInput = document.getElementById('new-final-wastage');
+                const finalWastage = parseFloat(finalWastageInput ? finalWastageInput.value : 0) || 0;
+                formData.finalWastage = finalWastage;
+                
                 // Validate form data
                 const validation = validateSaleForm(formData, false);
                 if (!validation.valid) {
@@ -2261,7 +3000,8 @@
                     totalQuantity += product.quantity;
                 });
                 
-                const totalAmount = totalWeightKg * priceValidation.value;
+                const netWeightKg = totalWeightKg - finalWastage;
+                const totalAmount = netWeightKg * priceValidation.value;
                 
                 // Create sanitized sale object
                 const newSale = {
@@ -2270,6 +3010,8 @@
                     merchantName: validation.data.merchantName,
                     products: validation.data.products,
                     totalWeightKg: totalWeightKg,
+                    finalWastage: finalWastage,
+                    netWeightKg: netWeightKg,
                     totalQuantity: totalQuantity,
                     overallPricePerKg: priceValidation.value,
                     totalAmount: totalAmount,
@@ -2377,9 +3119,20 @@
 
             const overallPricePerKgInput = document.getElementById('edit-overall-price-per-kg');
             const overallPricePerKg = parseFloat(overallPricePerKgInput.value);
+            
+            // Get wastage amount from final wastage input
+            const wastageInput = document.getElementById('edit-final-wastage');
+            const wastageAmount = parseFloat(wastageInput ? wastageInput.value : 0) || 0;
+            
+            // Calculate net weight after wastage
+            const netWeight = totalWeight - wastageAmount;
+            
+            // Update net weight display
+            document.getElementById('edit-net-weight').textContent = netWeight.toFixed(2) + ' kg';
+            
             let totalAmountDue = 0;
-            if (!isNaN(totalWeight) && !isNaN(overallPricePerKg)) {
-                totalAmountDue = totalWeight * overallPricePerKg;
+            if (!isNaN(netWeight) && !isNaN(overallPricePerKg) && netWeight > 0) {
+                totalAmountDue = netWeight * overallPricePerKg;
             }
             document.getElementById('edit-total-amount-due').textContent = '₹' + totalAmountDue.toFixed(2);
         }
@@ -2426,6 +3179,12 @@
                 document.getElementById('edit-sale-date').value = saleToEdit.date;
                 document.getElementById('edit-merchant-name').value = saleToEdit.merchantName;
                 document.getElementById('edit-overall-price-per-kg').value = saleToEdit.overallPricePerKg.toFixed(2);
+                
+                // Populate final wastage field (backward compatibility)
+                const finalWastageInput = document.getElementById('edit-final-wastage');
+                if (finalWastageInput) {
+                    finalWastageInput.value = saleToEdit.finalWastage ? saleToEdit.finalWastage.toFixed(2) : '0.00';
+                }
 
                 loadEditProductRows(saleToEdit.products || []); // Load existing products
                 document.getElementById('edit-sale-modal').classList.remove('hidden');
@@ -2485,6 +3244,11 @@
                     });
                 });
                 
+                // Get final wastage amount
+                const finalWastageInput = document.getElementById('edit-final-wastage');
+                const finalWastage = parseFloat(finalWastageInput ? finalWastageInput.value : 0) || 0;
+                formData.finalWastage = finalWastage;
+                
                 // Validate form data
                 const validation = validateSaleForm(formData, true);
                 if (!validation.valid) {
@@ -2528,7 +3292,8 @@
                         totalQuantity += product.quantity;
                     });
                     
-                    const totalAmount = totalWeightKg * priceValidation.value;
+                    const netWeightKg = totalWeightKg - finalWastage;
+                    const totalAmount = netWeightKg * priceValidation.value;
                     let balanceDue = totalAmount - currentAmountReceived;
                     if (balanceDue < 0) {
                         balanceDue = 0; // Ensure balance doesn't go negative
@@ -2540,6 +3305,8 @@
                         merchantName: validation.data.merchantName,
                         products: validation.data.products,
                         totalWeightKg: totalWeightKg,
+                        finalWastage: finalWastage,
+                        netWeightKg: netWeightKg,
                         totalQuantity: totalQuantity,
                         overallPricePerKg: priceValidation.value,
                         totalAmount: totalAmount,
@@ -2663,9 +3430,35 @@
                     return;
                 }
 
+                // Populate both print and screen elements
                 document.getElementById('bill-bill-number').textContent = saleToView.billNumber;
                 document.getElementById('bill-date').textContent = saleToView.date;
                 document.getElementById('bill-merchant-name').textContent = saleToView.merchantName;
+                
+                // Populate screen-specific elements
+                const billNumberScreen = document.querySelector('.bill-bill-number-screen');
+                const billDateScreen = document.querySelector('.bill-date-screen');
+                const billMerchantScreen = document.querySelector('.bill-merchant-name-screen');
+                
+                if (billNumberScreen) billNumberScreen.textContent = saleToView.billNumber;
+                if (billDateScreen) billDateScreen.textContent = saleToView.date;
+                if (billMerchantScreen) billMerchantScreen.textContent = saleToView.merchantName;
+                
+                // Populate enhanced view elements
+                const paymentStatus = saleToView.balanceDue <= 0 ? 'Paid' : saleToView.amountReceived > 0 ? 'Partially Paid' : 'Unpaid';
+                const statusColor = saleToView.balanceDue <= 0 ? 'text-green-600' : saleToView.amountReceived > 0 ? 'text-yellow-600' : 'text-red-600';
+                
+                const paymentStatusElement = document.getElementById('bill-payment-status');
+                if (paymentStatusElement) {
+                    paymentStatusElement.textContent = paymentStatus;
+                    paymentStatusElement.className = `font-semibold ${statusColor}`;
+                }
+                
+                const totalItemsElement = document.getElementById('bill-total-items');
+                if (totalItemsElement) {
+                    const totalItems = saleToView.products ? saleToView.products.length : 0;
+                    totalItemsElement.textContent = `${totalItems} item${totalItems !== 1 ? 's' : ''}`;
+                }
 
                 const productsTbody = document.getElementById('bill-products-tbody');
                 productsTbody.innerHTML = ''; // Clear previous products
@@ -2683,7 +3476,9 @@
                     productsTbody.appendChild(row);
                 });
 
-                document.getElementById('bill-total-weight').textContent = saleToView.totalWeightKg.toFixed(2);
+                document.getElementById('bill-gross-weight').textContent = saleToView.totalWeightKg ? saleToView.totalWeightKg.toFixed(2) : '0.00';
+                document.getElementById('bill-total-wastage').textContent = saleToView.finalWastage ? saleToView.finalWastage.toFixed(2) : '0.00';
+                document.getElementById('bill-total-weight').textContent = saleToView.netWeightKg ? saleToView.netWeightKg.toFixed(2) : saleToView.totalWeightKg.toFixed(2);
                 document.getElementById('bill-total-quantity').textContent = saleToView.totalQuantity;
                 document.getElementById('bill-overall-price-per-kg').textContent = saleToView.overallPricePerKg.toFixed(2);
                 document.getElementById('bill-total-amount').textContent = saleToView.totalAmount.toFixed(2);
@@ -2706,34 +3501,92 @@
             window.print();
         });
 
+        // --- Audit Logging Functions ---
+        function logAuditEvent(action, saleData, additionalInfo = {}) {
+            const auditLog = {
+                timestamp: new Date().toISOString(),
+                action: action,
+                saleId: saleData.id,
+                billNumber: saleData.billNumber,
+                merchantName: saleData.merchantName,
+                totalAmount: saleData.totalAmount,
+                date: saleData.date,
+                userAgent: navigator.userAgent,
+                ...additionalInfo
+            };
+            
+            // Store audit logs in localStorage
+            const existingLogs = JSON.parse(localStorage.getItem('auditLogs') || '[]');
+            existingLogs.push(auditLog);
+            
+            // Keep only last 1000 audit entries to prevent storage overflow
+            if (existingLogs.length > 1000) {
+                existingLogs.splice(0, existingLogs.length - 1000);
+            }
+            
+            localStorage.setItem('auditLogs', JSON.stringify(existingLogs));
+            console.log('Audit logged:', auditLog);
+        }
+        
         // --- Confirmation Modal Logic (for Delete) ---
         let currentConfirmAction = null; // Stores the function to execute on confirm
 
-        function openConfirmModal(actionType, saleId) {
+        async function openConfirmModal(actionType, saleId) {
             const confirmModal = document.getElementById('confirm-modal');
             const confirmMessageElement = document.getElementById('confirm-message');
             const executeConfirmBtn = document.getElementById('execute-confirm-btn');
 
             if (actionType === 'delete') {
-                confirmMessageElement.textContent = "Are you sure you want to delete this sale record? This action cannot be undone.";
-                currentConfirmAction = async () => {
-                    try {
-                        // Load current sales data from Firebase/local storage
-                        const currentSales = await loadSalesData();
-                        const updatedSales = currentSales.filter(sale => sale.id !== saleId);
-                        
-                        // Save updated sales data
-                        await saveSalesData(updatedSales);
-                        
-                        showFlashMessage('Sale deleted successfully!', 'success');
-                        confirmModal.classList.add('hidden');
-                        await renderSalesList(); // Re-render list after deletion
-                    } catch (error) {
-                        console.error("Error deleting sale: ", error);
-                        showFlashMessage('Error deleting sale. Please try again.', 'error');
-                        confirmModal.classList.add('hidden');
+                try {
+                    // Load sale details for confirmation
+                    const currentSales = await loadSalesData();
+                    const saleToDelete = currentSales.find(sale => sale.id === saleId);
+                    
+                    if (!saleToDelete) {
+                        showFlashMessage('Sale not found for deletion.', 'error');
+                        return;
                     }
-                };
+                    
+                    // Enhanced confirmation message with sale details
+                    confirmMessageElement.innerHTML = `
+                        <strong>Delete Sale Record?</strong><br><br>
+                        <div style="text-align: left; background: #f9f9f9; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                            <strong>Bill #:</strong> ${saleToDelete.billNumber}<br>
+                            <strong>Merchant:</strong> ${saleToDelete.merchantName}<br>
+                            <strong>Date:</strong> ${saleToDelete.date}<br>
+                            <strong>Amount:</strong> ₹${saleToDelete.totalAmount.toFixed(2)}
+                        </div>
+                        This action cannot be undone and will be logged for audit purposes.
+                    `;
+                    
+                    currentConfirmAction = async () => {
+                        try {
+                            // Log the deletion for audit purposes
+                            logAuditEvent('DELETE_SALE', saleToDelete, {
+                                reason: 'User initiated deletion',
+                                deletedAt: new Date().toISOString()
+                            });
+                            
+                            // Remove sale from data
+                            const updatedSales = currentSales.filter(sale => sale.id !== saleId);
+                            
+                            // Save updated sales data
+                            await saveSalesData(updatedSales);
+                            
+                            showFlashMessage(`Sale ${saleToDelete.billNumber} deleted successfully!`, 'success');
+                            confirmModal.classList.add('hidden');
+                            await renderSalesList(); // Re-render list after deletion
+                        } catch (error) {
+                            console.error("Error deleting sale: ", error);
+                            showFlashMessage('Error deleting sale. Please try again.', 'error');
+                            confirmModal.classList.add('hidden');
+                        }
+                    };
+                } catch (error) {
+                    console.error("Error loading sale for deletion: ", error);
+                    showFlashMessage('Error loading sale details. Please try again.', 'error');
+                    return;
+                }
             }
             // Add other action types here if needed
 
@@ -2977,6 +3830,25 @@
              const themeToggle = document.getElementById('theme-toggle');
              if (themeToggle) {
                  themeToggle.addEventListener('click', toggleTheme);
+             }
+             
+             // Add search and filter event listeners
+             const searchInput = document.getElementById('sales-search');
+             const paymentFilter = document.getElementById('payment-status-filter');
+             const dateFilter = document.getElementById('date-range-filter');
+             const clearButton = document.getElementById('clear-search');
+             
+             if (searchInput) {
+                 searchInput.addEventListener('input', debounce(applyFilters, 300));
+             }
+             if (paymentFilter) {
+                 paymentFilter.addEventListener('change', applyFilters);
+             }
+             if (dateFilter) {
+                 dateFilter.addEventListener('change', applyFilters);
+             }
+             if (clearButton) {
+                 clearButton.addEventListener('click', clearSearch);
              }
              
              // Initialize app with Firebase/local storage
