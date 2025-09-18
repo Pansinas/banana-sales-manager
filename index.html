@@ -19,7 +19,7 @@
     <!-- Firebase v9+ SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-        import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, orderBy, query } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, orderBy, query, onSnapshot } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
         import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
         // Your Firebase configuration
@@ -38,7 +38,7 @@
         const auth = getAuth(app);
 
         // Make Firebase services globally available
-        window.firebaseServices = { collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, orderBy, query, signInAnonymously };
+        window.firebaseServices = { collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, orderBy, query, onSnapshot, signInAnonymously };
         window.firebaseDB = db;
         window.firebaseAuth = auth;
         window.appFirebaseConfig = firebaseConfig;
@@ -1764,6 +1764,50 @@
             } catch (error) {
                 console.warn('Failed to save to Firebase:', error);
                 throw error;
+            }
+        }
+        
+        // Real-time listener for Firebase synchronization
+        let firebaseUnsubscribe = null;
+        
+        function setupRealtimeSync() {
+            try {
+                if (!window.isFirebaseReady) {
+                    console.log('Firebase not ready, skipping real-time sync setup');
+                    return;
+                }
+                
+                const { collection, query, orderBy, onSnapshot } = window.firebaseServices;
+                const salesCollection = collection(window.firebaseDB, 'sales');
+                const salesQuery = query(salesCollection, orderBy('createdAt', 'desc'));
+                
+                // Set up real-time listener
+                firebaseUnsubscribe = onSnapshot(salesQuery, (snapshot) => {
+                    const sales = [];
+                    snapshot.forEach((doc) => {
+                        sales.push({ id: doc.id, firebaseId: doc.id, ...doc.data() });
+                    });
+                    
+                    console.log(`🔄 Real-time sync: ${sales.length} sales received`);
+                    
+                    // Update local storage and UI
+                    saveSalesDataLocal(sales);
+                    allSalesData = sales;
+                    
+                    // Update UI if sales list is visible
+                    const salesContainer = document.getElementById('sales-list-container');
+                    if (salesContainer && !salesContainer.innerHTML.includes('Loading')) {
+                        renderSalesListUI(sales);
+                        updateMetrics(sales);
+                    }
+                }, (error) => {
+                    console.warn('Real-time sync error:', error);
+                    showFlashMessage('Real-time sync temporarily unavailable', 'warning');
+                });
+                
+                console.log('🔄 Real-time synchronization enabled');
+            } catch (error) {
+                console.warn('Failed to setup real-time sync:', error);
             }
         }
         
@@ -3621,6 +3665,9 @@
                     
                     // Sync local data to Firebase if needed
                     await syncLocalDataToFirebase();
+                    
+                    // Setup real-time synchronization
+                    setupRealtimeSync();
                 } else {
                     console.log("📱 Application initialized with local storage only.");
                     showFlashMessage('Running in offline mode', 'warning');
