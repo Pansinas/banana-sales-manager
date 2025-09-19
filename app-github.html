@@ -106,9 +106,14 @@
             }
             
             if (endpoint === '/sales/summary') {
+                // Ensure salesData is initialized and is an array
+                if (!Array.isArray(salesData)) {
+                    salesData = [];
+                }
+                
                 const totalSales = salesData.length;
-                const totalRevenue = salesData.reduce((sum, sale) => sum + sale.total_amount, 0);
-                const totalQuantity = salesData.reduce((sum, sale) => sum + sale.quantity, 0);
+                const totalRevenue = salesData.reduce((sum, sale) => sum + (sale.total_amount || 0), 0);
+                const totalQuantity = salesData.reduce((sum, sale) => sum + (sale.quantity || 0), 0);
                 const avgPrice = totalQuantity > 0 ? totalRevenue / totalQuantity : 0;
                 
                 return {
@@ -344,8 +349,11 @@
             });
             
             // Load initial data
-            loadSalesData();
-            updateSummary();
+            async function initializeApp() {
+                await loadSalesData();
+                await updateSummary();
+            }
+            initializeApp();
         });
         
         // Load and display sales data
@@ -377,12 +385,26 @@
             try {
                 const summary = await apiRequest('/sales/summary');
                 
-                document.getElementById('total-sales').textContent = summary.total_sales;
-                document.getElementById('total-revenue').textContent = `$${summary.total_revenue.toFixed(2)}`;
-                document.getElementById('total-quantity').textContent = `${summary.total_quantity} kg`;
-                document.getElementById('avg-price').textContent = `$${summary.average_price.toFixed(2)}/kg`;
+                // Add null checks to prevent TypeError
+                if (summary && typeof summary === 'object') {
+                    document.getElementById('total-sales').textContent = summary.total_sales || 0;
+                    document.getElementById('total-revenue').textContent = `$${(summary.total_revenue || 0).toFixed(2)}`;
+                    document.getElementById('total-quantity').textContent = `${summary.total_quantity || 0} kg`;
+                    document.getElementById('avg-price').textContent = `$${(summary.average_price || 0).toFixed(2)}/kg`;
+                } else {
+                    // Set default values if summary is null/undefined
+                    document.getElementById('total-sales').textContent = '0';
+                    document.getElementById('total-revenue').textContent = '$0.00';
+                    document.getElementById('total-quantity').textContent = '0 kg';
+                    document.getElementById('avg-price').textContent = '$0.00/kg';
+                }
             } catch (error) {
                 console.error('Error updating summary:', error);
+                // Set default values on error
+                document.getElementById('total-sales').textContent = '0';
+                document.getElementById('total-revenue').textContent = '$0.00';
+                document.getElementById('total-quantity').textContent = '0 kg';
+                document.getElementById('avg-price').textContent = '$0.00/kg';
             }
         }
         
