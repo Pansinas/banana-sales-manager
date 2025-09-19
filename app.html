@@ -311,7 +311,7 @@
                 }
                 
                 this.isConnecting = true;
-                const wsUrl = 'wss://banana-sales-backend.vercel.app';
+                const wsUrl = 'ws://banana-sales-backend.onrender.com';
                 
                 try {
                     console.log(`🔗 Attempting WebSocket connection (attempt ${this.reconnectAttempts + 1})`);
@@ -2667,7 +2667,7 @@
 
     <script>
         // --- PostgreSQL API Configuration ---
-        const API_BASE_URL = 'https://banana-sales-backend.vercel.app/api';
+        const API_BASE_URL = 'http://banana-sales-backend.onrender.com/api';
         
         // API Helper Functions
         async function apiRequest(endpoint, options = {}) {
