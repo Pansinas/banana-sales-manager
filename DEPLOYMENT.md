@@ -138,7 +138,78 @@ Render is an excellent platform for deploying full-stack applications with autom
    -- Copy and paste contents from database/schema.sql
    ```
 
-### Option 4: Docker + Cloud Provider
+### Option 4: Vercel (Serverless)
+
+Vercel is excellent for serverless deployment with automatic scaling and global CDN.
+
+#### Backend Deployment (Serverless Functions):
+
+1. **Create Vercel account** at [vercel.com](https://vercel.com)
+
+2. **Import your repository:**
+   - Click "New Project"
+   - Connect GitHub and select your repository
+   - Choose "Other" framework preset
+
+3. **Configure backend project:**
+   ```
+   Project Name: banana-sales-backend
+   Framework Preset: Other
+   Root Directory: ./backend
+   Build Command: npm install
+   Output Directory: ./
+   Install Command: npm install
+   ```
+
+4. **Create vercel.json in backend folder:**
+   ```json
+   {
+     "version": 2,
+     "builds": [
+       {
+         "src": "server.js",
+         "use": "@vercel/node"
+       }
+     ],
+     "routes": [
+       {
+         "src": "/(.*)",
+         "dest": "/server.js"
+       }
+     ]
+   }
+   ```
+
+5. **Set environment variables:**
+   ```env
+   NODE_ENV=production
+   POSTGRES_URL=postgresql://default:password@ep-xxxxx.us-east-1.postgres.vercel-storage.com:5432/verceldb
+   POSTGRES_PRISMA_URL=postgresql://default:password@ep-xxxxx.us-east-1.postgres.vercel-storage.com:5432/verceldb?pgbouncer=true&connect_timeout=15
+   POSTGRES_URL_NON_POOLING=postgresql://default:password@ep-xxxxx.us-east-1.postgres.vercel-storage.com:5432/verceldb
+   DB_HOST=ep-xxxxx.us-east-1.postgres.vercel-storage.com
+   DB_PORT=5432
+   DB_NAME=verceldb
+   DB_USER=default
+   DB_PASSWORD=your_generated_password
+   ```
+
+6. **Create Vercel Postgres database:**
+   - Go to Storage tab in your project
+   - Click "Create Database" → "Postgres"
+   - Copy the connection details to environment variables
+
+#### Frontend Deployment (Static Site):
+
+1. **Create another Vercel project:**
+   - Import the same repository
+   - Choose root directory: `./`
+   - No build command needed
+
+2. **Update API endpoints in app.html:**
+   - Replace `localhost:3000` with your Vercel backend URL
+   - Example: `https://banana-sales-backend.vercel.app`
+
+### Option 5: Docker + Cloud Provider
 
 1. **Add Docker Hub secrets:**
    - `DOCKER_USERNAME`: Your Docker Hub username
