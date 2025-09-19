@@ -12,47 +12,170 @@
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
     <meta name="theme-color" content="#10b981">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🍌%3C/text%3E%3C/svg%3E">
-    <title>Banana Sales Manager (Firebase)</title>
+    <title>Banana Sales Manager (MongoDB)</title
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <!-- Firebase v9+ SDK -->
+    <!-- MongoDB Realm Web SDK -->
+    <script src="https://unpkg.com/realm-web@2.0.1/dist/bundle.iife.js"></script>
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-        import { getFirestore, collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, orderBy, query, onSnapshot } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
-        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
-
-        // Your Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDNWaOPTn1GiT8zAWFfXxiYuA-depTisCc",
-            authDomain: "my-banana-sales-app.firebaseapp.com",
-            projectId: "my-banana-sales-app",
-            storageBucket: "my-banana-sales-app.firebasestorage.app",
-            messagingSenderId: "461621717926",
-            appId: "1:461621717926:web:078f5f43bb35bcce93fd67",
-            measurementId: "G-PTW713Z5VN"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-
-        // Make Firebase services globally available
-        window.firebaseServices = { collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, orderBy, query, onSnapshot, signInAnonymously };
-        window.firebaseDB = db;
-        window.firebaseAuth = auth;
-        window.appFirebaseConfig = firebaseConfig;
+        // Your MongoDB configuration
+        const mongoAppId = 'banana-sales-app-znmhslq'; // Your MongoDB App ID
+        const mongoDbName = 'banana_sales';
+        const mongoCollectionName = 'sales';
         
-        // Initialize Firebase authentication and set ready state
-        window.firebaseReady = signInAnonymously(auth)
-            .then(() => {
-                console.log('🔥 Firebase authenticated successfully');
+        // Initialize MongoDB Realm
+        const app = new Realm.App({ id: mongoAppId });
+        let mongodb;
+        let salesCollection;
+        
+        // Make MongoDB services globally available (Firebase-compatible interface)
+        window.firebaseServices = {
+            // MongoDB equivalents for Firebase functions
+            collection: (collectionName) => ({ collectionName }),
+            addDoc: async (collection, data) => {
+                if (!salesCollection) throw new Error('MongoDB not initialized');
+                const result = await salesCollection.insertOne({
+                    ...data,
+                    created_at: new Date()
+                });
+                return { id: result.insertedId.toString() };
+            },
+            getDocs: async (query) => {
+                if (!salesCollection) throw new Error('MongoDB not initialized');
+                const data = await salesCollection.find({}).sort({ created_at: -1 }).toArray();
+                return {
+                    size: data.length,
+                    forEach: (callback) => data.forEach((doc, index) => callback({ 
+                        id: doc._id.toString(), 
+                        data: () => doc 
+                    }))
+                };
+            },
+            getDoc: async (docRef) => {
+                if (!salesCollection) throw new Error('MongoDB not initialized');
+                const data = await salesCollection.findOne({ _id: new Realm.BSON.ObjectId(docRef.id) });
+                return { data: () => data, exists: () => !!data };
+            },
+            updateDoc: async (docRef, data) => {
+                if (!salesCollection) throw new Error('MongoDB not initialized');
+                await salesCollection.updateOne(
+                    { _id: new Realm.BSON.ObjectId(docRef.id) },
+                    { $set: { ...data, updated_at: new Date() } }
+                );
+            },
+            deleteDoc: async (docRef) => {
+                if (!salesCollection) throw new Error('MongoDB not initialized');
+                await salesCollection.deleteOne({ _id: new Realm.BSON.ObjectId(docRef.id) });
+            },
+            doc: (db, collection, id) => ({ id, collection }),
+            query: (collection, ...constraints) => ({ ...collection, constraints }),
+            orderBy: (field, direction) => ({ field, direction }),
+            onSnapshot: (query, callback, errorCallback) => {
+                // MongoDB doesn't have built-in real-time subscriptions in free tier
+                // We'll implement polling for real-time updates
+                let isActive = true;
+                
+                const pollForChanges = async () => {
+                    if (!isActive || !salesCollection) return;
+                    
+                    try {
+                        const data = await salesCollection.find({}).sort({ created_at: -1 }).toArray();
+                        const snapshot = {
+                            size: data.length,
+                            empty: data.length === 0,
+                            metadata: { fromCache: false },
+                            forEach: (cb) => data.forEach((doc) => cb({ 
+                                id: doc._id.toString(), 
+                                data: () => doc 
+                            }))
+                        };
+                        callback(snapshot);
+                    } catch (error) {
+                        if (errorCallback) {
+                            errorCallback(error);
+                        }
+                    }
+                };
+                
+                // Initial load
+                pollForChanges();
+                
+                // Set up polling interval (every 5 seconds)
+                const interval = setInterval(pollForChanges, 5000);
+                
+                // Return unsubscribe function
+                return () => {
+                    isActive = false;
+                    clearInterval(interval);
+                };
+            },
+            signInAnonymously: async () => {
+                // MongoDB Realm anonymous authentication
+                const credentials = Realm.Credentials.anonymous();
+                const user = await app.logIn(credentials);
+                return { user: { uid: user.id } };
+            }
+        };
+        
+        window.firebaseDB = { name: 'mongodb' };
+        window.firebaseAuth = { currentUser: { uid: 'anonymous' } };
+        window.mongoClient = app;
+        
+        // Initialize MongoDB authentication and set ready state
+        window.firebaseReady = window.firebaseServices.signInAnonymously()
+            .then(async (result) => {
+                console.log('🚀 MongoDB authenticated successfully');
+                
+                // Get MongoDB database and collection
+                mongodb = app.currentUser.mongoClient('mongodb-atlas');
+                const database = mongodb.db(mongoDbName);
+                salesCollection = database.collection(mongoCollectionName);
+                
                 window.isFirebaseReady = true;
+                
+                // Test MongoDB connection
+                setTimeout(async () => {
+                    try {
+                        const { collection, addDoc, getDocs } = window.firebaseServices;
+                        
+                        // First try to read from sales collection
+                        console.log('🧪 Testing MongoDB read access...');
+                        const salesColl = collection('sales');
+                        const snapshot = await getDocs(salesColl);
+                        console.log('✅ MongoDB read successful. Documents:', snapshot.size);
+                        
+                        // Then try to write a test document
+                        console.log('🧪 Testing MongoDB write access...');
+                        const testDoc = await addDoc(salesColl, {
+                            test: true,
+                            timestamp: new Date(),
+                            message: 'Connection test successful'
+                        });
+                        console.log('✅ MongoDB write successful:', testDoc.id);
+                        
+                    } catch (error) {
+                        console.error('❌ MongoDB test failed:', error);
+                        console.error('Error details:', {
+                            code: error.code,
+                            message: error.message,
+                            stack: error.stack
+                        });
+                        
+                        if (error.message?.includes('permission') || error.message?.includes('unauthorized')) {
+                            console.error('🔒 Permission denied - MongoDB access rules may be blocking access');
+                            console.error('💡 Solution: Check MongoDB Atlas Data Access rules and authentication');
+                        } else if (error.message?.includes('not initialized')) {
+                            console.error('🚫 MongoDB not initialized - connection may have failed');
+                            console.error('💡 Solution: Check MongoDB App ID and ensure MongoDB Atlas is properly configured');
+                        }
+                    }
+                }, 2000);
+                
                 return true;
             })
             .catch((error) => {
-                console.warn('🔥 Firebase authentication failed:', error);
+                console.warn('🚀 MongoDB authentication failed:', error);
                 window.isFirebaseReady = false;
                 return false;
             });
@@ -1712,84 +1835,102 @@
             localStorage.setItem('banana-sales-data', JSON.stringify(data));
         }
         
-        // Load data from Firebase
+        // Load data from MongoDB
         async function loadSalesFromFirebase() {
             try {
                 if (!window.isFirebaseReady) {
-                    throw new Error('Firebase not ready');
+                    throw new Error('MongoDB not ready');
                 }
                 
                 const { collection, getDocs, query, orderBy } = window.firebaseServices;
-                const salesCollection = collection(window.firebaseDB, 'sales');
-                const salesQuery = query(salesCollection, orderBy('createdAt', 'desc'));
+                const salesCollection = collection('sales');
+                const salesQuery = query(salesCollection, orderBy('created_at', 'desc'));
                 const querySnapshot = await getDocs(salesQuery);
                 
                 const sales = [];
                 querySnapshot.forEach((doc) => {
-                    sales.push({ id: doc.id, ...doc.data() });
+                    const data = doc.data();
+                    sales.push({ id: doc.id, firebaseId: doc.id, ...data });
                 });
                 
-                console.log(`🔥 Loaded ${sales.length} sales from Firebase`);
+                console.log(`🚀 Loaded ${sales.length} sales from MongoDB`);
                 return sales;
             } catch (error) {
-                console.warn('Failed to load from Firebase:', error);
+                console.warn('Failed to load from MongoDB:', error);
                 throw error;
             }
         }
         
-        // Save data to Firebase
+        // Save data to MongoDB
         async function saveSalesToFirebase(salesArray) {
             try {
                 if (!window.isFirebaseReady) {
-                    throw new Error('Firebase not ready');
+                    throw new Error('MongoDB not ready');
                 }
                 
                 const { collection, addDoc, doc, updateDoc } = window.firebaseServices;
-                const salesCollection = collection(window.firebaseDB, 'sales');
+                const salesCollection = collection('sales');
                 
                 // For now, we'll sync all sales (in a real app, you'd want incremental sync)
                 for (const sale of salesArray) {
-                    if (sale.firebaseId) {
+                    if (sale.firebaseId || sale.id) {
                         // Update existing document
-                        const saleDoc = doc(window.firebaseDB, 'sales', sale.firebaseId);
+                        const saleDoc = doc(window.firebaseDB, 'sales', sale.firebaseId || sale.id);
                         await updateDoc(saleDoc, sale);
                     } else {
                         // Add new document
                         const docRef = await addDoc(salesCollection, sale);
                         sale.firebaseId = docRef.id;
+                        sale.id = docRef.id;
                     }
                 }
                 
-                console.log(`🔥 Saved ${salesArray.length} sales to Firebase`);
+                console.log(`🚀 Saved ${salesArray.length} sales to MongoDB`);
                 return true;
             } catch (error) {
-                console.warn('Failed to save to Firebase:', error);
+                console.warn('Failed to save to MongoDB:', error);
                 throw error;
             }
         }
         
-        // Real-time listener for Firebase synchronization
+        // Real-time listener for MongoDB synchronization
         let firebaseUnsubscribe = null;
         
         function setupRealtimeSync() {
             try {
-                if (!window.isFirebaseReady) {
-                    console.log('Firebase not ready, skipping real-time sync setup');
+                console.log('🔄 Setting up real-time sync...', {
+                    firebaseReady: !!window.firebaseReady,
+                    isFirebaseReady: !!window.isFirebaseReady,
+                    mongodb: !!window.mongoClient,
+                    firebaseServices: !!window.firebaseServices
+                });
+                
+                if (!window.firebaseReady && !window.isFirebaseReady) {
+                    console.log('❌ MongoDB not ready, skipping real-time sync setup');
                     return;
                 }
                 
                 const { collection, query, orderBy, onSnapshot } = window.firebaseServices;
-                const salesCollection = collection(window.firebaseDB, 'sales');
-                const salesQuery = query(salesCollection, orderBy('createdAt', 'desc'));
+                const salesCollection = collection('sales');
+                const salesQuery = query(salesCollection, orderBy('created_at', 'desc'));
                 
                 // Set up real-time listener
+                console.log('📡 Setting up MongoDB listener on sales collection...');
                 firebaseUnsubscribe = onSnapshot(salesQuery, (snapshot) => {
-                    const sales = [];
-                    snapshot.forEach((doc) => {
-                        sales.push({ id: doc.id, firebaseId: doc.id, ...doc.data() });
+                    console.log('📨 MongoDB snapshot received:', {
+                        size: snapshot.size,
+                        empty: snapshot.empty,
+                        metadata: snapshot.metadata
                     });
                     
-                    console.log(`🔄 Real-time sync: ${sales.length} sales received`);
+                    const sales = [];
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        console.log('📄 Document:', { id: doc.id, data });
+                        sales.push({ id: doc.id, firebaseId: doc.id, ...data });
+                    });
+                    
+                    console.log(`🔄 Real-time sync: ${sales.length} sales received`, sales);
                     
                     // Update local storage and UI
                     saveSalesDataLocal(sales);
@@ -1812,10 +1953,10 @@
             }
         }
         
-        // Hybrid data functions - use Firebase when available, fallback to localStorage
+        // Hybrid data functions - use MongoDB when available, fallback to localStorage
         async function loadSalesData() {
             try {
-                // Try Firebase first if online and ready
+                // Try MongoDB first if online and ready
                 if (navigator.onLine && window.isFirebaseReady) {
                     const firebaseSales = await loadSalesFromFirebase();
                     // Also save to localStorage as backup
@@ -1823,7 +1964,7 @@
                     return firebaseSales;
                 }
             } catch (error) {
-                console.warn('Firebase load failed, using localStorage:', error);
+                console.warn('MongoDB load failed, using localStorage:', error);
             }
             
             // Fallback to localStorage
@@ -1835,12 +1976,12 @@
             saveSalesDataLocal(data);
             
             try {
-                // Try to sync with Firebase if online and ready
+                // Try to sync with MongoDB if online and ready
                 if (navigator.onLine && window.isFirebaseReady) {
                     await saveSalesToFirebase(data);
                 }
             } catch (error) {
-                console.warn('Firebase sync failed, data saved locally:', error);
+                console.warn('MongoDB sync failed, data saved locally:', error);
                 // Show user that data is saved locally but not synced
                 showFlashMessage('Data saved locally. Will sync when connection is restored.', 'warning');
             }
@@ -3659,12 +3800,24 @@
             
             // Wait for Firebase to be ready
             try {
+                console.log('🔍 Checking Firebase readiness...', {
+                    firebaseReady: !!window.firebaseReady,
+                    auth: !!window.auth,
+                    db: !!window.db,
+                    authCurrentUser: window.auth?.currentUser
+                });
+                
                 if (window.firebaseReady) {
                     await window.firebaseReady;
-                    console.log("🔥 Application initialized with Firebase.");
+                    console.log("🚀 Application initialized with MongoDB.");
+                    console.log('🔍 MongoDB services status:', {
+                        auth: !!window.firebaseAuth,
+                        db: !!window.mongoClient,
+                        currentUser: window.firebaseAuth?.currentUser?.uid || 'anonymous'
+                    });
                     showFlashMessage('Connected to cloud database!', 'success');
                     
-                    // Sync local data to Firebase if needed
+                    // Sync local data to MongoDB if needed
                     await syncLocalDataToFirebase();
                     
                     // Setup real-time synchronization
@@ -3674,7 +3827,7 @@
                     showFlashMessage('Running in offline mode', 'warning');
                 }
             } catch (error) {
-                console.warn('Firebase initialization failed, using local storage:', error);
+                console.warn('MongoDB initialization failed, using local storage:', error);
                 showFlashMessage('Using local storage (offline mode)', 'warning');
             }
             
@@ -3683,29 +3836,29 @@
             addInitialNewProductRow(); // For the 'Add New Sale' form
         }, 'initializeApp');
         
-        // Sync local data to Firebase
+        // Sync local data to MongoDB
         async function syncLocalDataToFirebase() {
             try {
                 const localData = loadSalesDataLocal();
                 if (localData && localData.length > 0) {
-                    console.log('🔄 Syncing local data to Firebase...');
+                    console.log('🔄 Syncing local data to MongoDB...');
                     
-                    // Check if Firebase already has data
+                    // Check if MongoDB already has data
                     const firebaseData = await loadSalesFromFirebase();
                     
                     if (!firebaseData || firebaseData.length === 0) {
-                        // Firebase is empty, upload local data
+                        // MongoDB is empty, upload local data
                         for (const sale of localData) {
                             await saveSalesToFirebase([sale]);
                         }
-                        console.log('✅ Local data synced to Firebase');
+                        console.log('✅ Local data synced to MongoDB');
                         showFlashMessage('Data synced to cloud!', 'success');
                     } else {
-                        console.log('📊 Firebase already has data, skipping sync');
+                        console.log('📊 MongoDB already has data, skipping sync');
                     }
                 }
             } catch (error) {
-                console.warn('Failed to sync local data to Firebase:', error);
+                console.warn('Failed to sync local data to MongoDB:', error);
             }
         }
         
