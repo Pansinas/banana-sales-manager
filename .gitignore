@@ -69,3 +69,11 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# PostgreSQL binaries and data
+postgresql-*/
+postgresql-data/
+*.zip
+
+# macOS metadata
+__MACOSX/
