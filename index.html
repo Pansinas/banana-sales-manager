@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Professional banana sales management system">
+    <meta name="keywords" content="banana sales, inventory management, business management">
+    <meta name="author" content="Banana Sales Manager">
+    <meta name="theme-color" content="#10b981">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🍌%3C/text%3E%3C/svg%3E">
+    <title>Banana Sales Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .loading-spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #10b981;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen flex items-center justify-center">
+        <div class="text-center">
+            <div class="text-6xl mb-4">🍌</div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">Banana Sales Manager</h1>
+            <div class="loading-spinner mx-auto mb-4"></div>
+            <p class="text-gray-600 mb-6">Loading application...</p>
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md mx-auto">
+                <p class="text-yellow-800 text-sm">
+                    <strong>Note:</strong> This is a demo version. For full functionality including database features, 
+                    please run the application locally with PostgreSQL backend.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if we're on GitHub Pages or local development
+        const isGitHubPages = window.location.hostname.includes('github.io') || 
+                             window.location.hostname.includes('github.com') ||
+                             window.location.protocol === 'https:';
+        
+        // Redirect to appropriate version after a brief loading screen
+        setTimeout(() => {
+            if (isGitHubPages) {
+                window.location.href = './app-github.html';
+            } else {
+                window.location.href = './app.html';
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

@@ -69,30 +69,3 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
-
-# Deployment and build files
-dist/
-build/
-*.tar.gz
-*.zip
-
-# Docker files
-.dockerignore
-
-# CI/CD artifacts
-.github/workflows/*.log
-
-# Production database backups
-*.sql.backup
-*.dump
-
-# SSL certificates (if any)
-*.pem
-*.key
-*.crt
-
-# Railway deployment files
-railway.json
-
-# Heroku deployment files
-Procfile.local
