@@ -1,0 +1,44 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/app",
+      "destination": "/app.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://banana-sales-backend-eight.vercel.app wss://banana-sales-backend-eight.vercel.app; img-src 'self' data: https:; font-src 'self' data: https:;"
+        }
+      ]
+    }
+  ],
+  "regions": ["iad1"],
+  "github": {
+    "silent": true
+  }
+}

@@ -1,5 +1,45 @@
 {
+  "name": "banana-sales-management",
+  "version": "1.0.0",
+  "description": "A comprehensive banana sales management application with real-time tracking and analytics",
+  "main": "app.html",
+  "scripts": {
+    "start": "node -e \"const path = require('path'); const { execSync } = require('child_process'); const appPath = path.join(__dirname, 'app.html'); console.log('Opening app.html...'); execSync('start ' + appPath, {shell: true});\"",
+    "dev": "npm run start",
+    "configure-vercel": "node configure-vercel.js",
+    "deploy-vercel": "node deploy-vercel.js",
+    "validate-config": "node configure-vercel.js",
+    "backend": "cd backend && npm start",
+    "install-all": "npm install && cd backend && npm install",
+    "test-deployment": "node -e \"console.log('Testing deployment configuration...'); require('./configure-vercel.js');\""
+  },
+  "keywords": [
+    "banana",
+    "sales",
+    "management",
+    "tracking",
+    "analytics",
+    "vercel",
+    "nodejs"
+  ],
+  "author": "Banana Sales Team",
+  "license": "MIT",
   "dependencies": {
     "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/banana-sales-management.git"
+  },
+  "homepage": "https://banana-sales-frontend.vercel.app",
+  "vercel": {
+    "version": 2,
+    "name": "banana-sales-frontend"
   }
 }

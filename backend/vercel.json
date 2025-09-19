@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "banana-sales-backend",
   "builds": [
     {
       "src": "server.js",
@@ -19,11 +18,6 @@
   ],
   "env": {
     "NODE_ENV": "production"
-  },
-  "functions": {
-    "server.js": {
-      "maxDuration": 30
-    }
   },
   "regions": ["iad1"],
   "github": {
