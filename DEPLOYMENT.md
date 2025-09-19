@@ -62,7 +62,83 @@ The frontend is automatically deployed to GitHub Pages when you push to the main
    heroku addons:create heroku-postgresql:hobby-dev
    ```
 
-### Option 3: Docker + Cloud Provider
+### Option 3: Render (Recommended for Production)
+
+Render is an excellent platform for deploying full-stack applications with automatic deployments from GitHub.
+
+#### Backend Deployment on Render:
+
+1. **Create a Render account** at [render.com](https://render.com)
+
+2. **Connect your GitHub repository:**
+   - Click "New +" → "Web Service"
+   - Connect your GitHub account
+   - Select your repository
+
+3. **Configure the web service:**
+   ```
+   Name: banana-sales-backend
+   Environment: Node
+   Build Command: cd backend && npm install
+   Start Command: cd backend && npm start
+   ```
+
+4. **Set environment variables in Render dashboard:**
+   ```env
+   NODE_ENV=production
+   PORT=10000
+   DB_HOST=your-postgres-host
+   DB_PORT=5432
+   DB_NAME=banana_sales
+   DB_USER=your-db-user
+   DB_PASSWORD=your-db-password
+   ```
+
+5. **Create PostgreSQL database:**
+   - Click "New +" → "PostgreSQL"
+   - Name: `banana-sales-db`
+   - Copy the connection details to your web service environment variables
+
+6. **Deploy:**
+   - Click "Create Web Service"
+   - Render will automatically build and deploy your backend
+   - Your API will be available at: `https://your-service-name.onrender.com`
+
+#### Frontend Deployment on Render:
+
+1. **Create a static site:**
+   - Click "New +" → "Static Site"
+   - Connect the same GitHub repository
+
+2. **Configure the static site:**
+   ```
+   Name: banana-sales-frontend
+   Build Command: # Leave empty (no build needed)
+   Publish Directory: .
+   ```
+
+3. **Update API endpoint in app.html:**
+   - Replace `localhost:3000` with your Render backend URL
+   - Example: `https://banana-sales-backend.onrender.com`
+
+4. **Deploy:**
+   - Your frontend will be available at: `https://your-frontend-name.onrender.com`
+
+#### Auto-Deploy Setup:
+
+1. **Enable auto-deploy:**
+   - In your Render service settings
+   - Enable "Auto-Deploy" from GitHub
+   - Choose the `main` branch
+
+2. **Database initialization:**
+   - Connect to your PostgreSQL database via Render dashboard
+   - Run the schema setup:
+   ```sql
+   -- Copy and paste contents from database/schema.sql
+   ```
+
+### Option 4: Docker + Cloud Provider
 
 1. **Add Docker Hub secrets:**
    - `DOCKER_USERNAME`: Your Docker Hub username
